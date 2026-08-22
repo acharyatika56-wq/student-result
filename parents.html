@@ -3,56 +3,80 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>विद्यार्थी दैनिक गतिविधि परिणाम</title>
+  <title>विद्यार्थी दैनिक गतिविधि परिणाम - Parents Portal</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:12px}
     .header{background:#1e3a8a;color:white;padding:16px;border-radius:10px;text-align:center;margin-bottom:15px}
-    .card{background:white;border-radius:10px;padding:12px;box-shadow:0 2px 8px #0001;margin-bottom:15px}
-    table{border-collapse:collapse;width:100%;min-width:600px}
-    th,td{border:1px solid #e2e8f0;padding:8px;text-align:center;font-size:14px}
+    .card{background:white;border-radius:10px;padding:14px;box-shadow:0 2px 8px #0001;margin-bottom:15px}
+    select,input{padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;width:100%;margin-top:4px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+    table{border-collapse:collapse;width:100%;min-width:650px;margin-bottom:15px}
+    th,td{border:1px solid #e2e8f0;padding:8px;text-align:center;font-size:13px}
     th{background:#3b82f6;color:white}
     .green{color:#16a34a;font-weight:bold}
     .red{color:#dc2626;font-weight:bold}
     .score{font-weight:bold;background:#f1f5f9}
     .top{color:#16a34a}
     .low{color:#dc2626}
-    input{width:100%;padding:10px;margin-top:5px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+    .sub-header{background:#1d4ed8;color:white;font-size:15px;text-align:left;padding:8px 12px;border-radius:6px 6px 0 0;font-weight:bold;margin-top:15px}
   </style>
 </head>
 <body>
 
 <div class="header">
-  <h2 style="margin:0" id="title">📊 दैनिक गतिविधि परिणाम Portal</h2>
+  <h2 style="margin:0" id="title">📊 विद्यार्थी दैनिक गतिविधि परिणाम Portal</h2>
   <div id="subTitle" style="font-size:14px;margin-top:5px">डाटा लोड हुँदैछ...</div>
 </div>
 
-<div class="card">
-  <label><b>विद्यार्थीको नाम वा सेक्सन खोज्नुहोस्:</b></label>
-  <input id="search" placeholder="विद्यार्थीको नाम वा सेक्सन लेख्नुहोस्..." oninput="render()">
+<div class="card grid">
+  <div>
+    <label><b>कक्षा (Class):</b></label>
+    <select id="selClass" onchange="render()">
+      <option value="8">Class 8</option>
+      <option value="9" selected>Class 9</option>
+      <option value="10">Class 10</option>
+    </select>
+  </div>
+  <div>
+    <label><b>सेक्सन (Section):</b></label>
+    <select id="selSec" onchange="render()">
+      <option value="Darwin">Darwin</option>
+      <option value="Newton">Newton</option>
+    </select>
+  </div>
+  <div>
+    <label><b>विद्यार्थीको नाम खोज्नुहोस्:</b></label>
+    <input id="searchName" placeholder="नाम लेख्नुहोस्..." oninput="render()">
+  </div>
 </div>
 
-<div class="card" style="overflow:auto">
-  <table id="tbl">
-    <tr><td style="padding:20px;">डाटा तान्दैछ, कृपया १ छिन पर्खिनुहोस्...</td></tr>
-  </table>
+<div class="card" style="overflow-x:auto" id="container">
+  <div style="padding:20px;text-align:center;">डाटा तान्दैछ, कृपया १ छिन पर्खिनुहोस्...</div>
 </div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzRceiAgW7MRrJtHTJ8u9a_VAw_IEow72UltTQGvR-kxScQZOElvRgpVdHkTX0C7dnY6g/exec";
-let P_DATA = null;
+let DB = {};
 
 function handleData(response) {
   try {
-    let parsed = typeof response === 'string' ? JSON.parse(response) : response;
-    if (!parsed || !parsed.data || !parsed.data.students || parsed.data.students.length === 0) {
-      document.getElementById('subTitle').textContent = "अझै नतिजा Publish भएको छैन।";
-      document.getElementById('tbl').innerHTML = '<tr><td style="padding:20px;color:#c62828;">कुनै डाटा भेटिएन। पहिले Teacher Dashboard बाट Publish गर्नुहोस्।</td></tr>';
-      return;
+    DB = typeof response === 'string' ? JSON.parse(response) : response;
+    
+    // पुराना single-data संरचना छ भने पनि handle गर्ने logic:
+    if (DB && DB.data && !DB['8'] && !DB['9'] && !DB['10']) {
+      let temp = {};
+      let c = DB.className || '9';
+      let sub = DB.subject || 'General';
+      temp[c] = {};
+      temp[c]['Darwin'] = {};
+      temp[c]['Darwin'][sub] = DB.data;
+      temp[c]['Newton'] = {};
+      temp[c]['Newton'][sub] = DB.data;
+      DB = temp;
     }
-    P_DATA = parsed;
-    document.getElementById('title').textContent = `📊 कक्षा ${P_DATA.className || ''} — ${P_DATA.subject || ''}`;
-    document.getElementById('subTitle').textContent = `अन्तिम अद्यावधिक परिणाम`;
+
+    document.getElementById('subTitle').textContent = "अन्तिम अद्यावधिक नतिजा";
     render();
   } catch(e) {
     document.getElementById('subTitle').textContent = "डाटा Format मा समस्या आयो।";
@@ -64,7 +88,7 @@ function loadData() {
   script.src = API_URL + "?callback=handleData";
   script.onerror = function() {
     document.getElementById('subTitle').textContent = "डाटा लोड गर्न सकिएन।";
-    document.getElementById('tbl').innerHTML = '<tr><td style="padding:20px;color:#c62828;">कनेक्सन भएन। नेटवर्क वा Apps Script URL जाँच्नुहोस्।</td></tr>';
+    document.getElementById('container').innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626;">कनेक्सन भएन। नेटवर्क वा Apps Script URL जाँच्नुहोस्।</div>';
   };
   document.body.appendChild(script);
 }
@@ -76,38 +100,61 @@ function score(s) {
 }
 
 function render() {
-  if (!P_DATA || !P_DATA.data) return;
-  let D = P_DATA.data;
-  let query = document.getElementById('search').value.toLowerCase().trim();
+  let c = document.getElementById('selClass').value;
+  let sec = document.getElementById('selSec').value;
+  let q = document.getElementById('searchName').value.toLowerCase().trim();
+  let container = document.getElementById('container');
 
-  let filtered = (D.students || []).filter(s =>
-    s.name.toLowerCase().includes(query) ||
-    (s.sec && s.sec.toLowerCase().includes(query))
-  );
-
-  if (filtered.length === 0) {
-    document.getElementById('tbl').innerHTML = '<tr><td style="padding:20px;">यो नाम/सेक्सनको विद्यार्थी भेटिएन।</td></tr>';
+  if (!DB || (!DB[c] && !DB[c + ''])) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626;">यो कक्षाको डाटा अझै Publish भएको छैन।</div>';
     return;
   }
 
-  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थीको नाम</th><th>सेक्सन</th>';
-  (D.days || []).forEach(d => h += `<th colspan="3">${d}<br><small>HW | CW | DIS</small></th>`);
-  h += '<th>कुल अंक</th></tr>';
+  let classData = DB[c] || DB[c + ''];
 
-  filtered.forEach((s, i) => {
-    let sc = score(s);
-    h += `<tr><td>${i + 1}</td><td style="text-align:left;font-weight:bold">${s.name}</td><td>${s.sec || '-'}</td>`;
-    (D.days || []).forEach(d => {
-      let a = (s.m && s.m[d]) ? s.m[d] : {};
-      ['hw', 'cw', 'dis'].forEach(k => {
-        let v = a[k] || 0;
-        h += `<td class="${v == 1 ? 'green' : v == -1 ? 'red' : ''}">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+  if (!classData || !classData[sec]) {
+    container.innerHTML = `<div style="padding:20px;text-align:center;color:#dc2626;">कक्षा ${c} (${sec}) को डाटा अझै Publish भएको छैन।</div>`;
+    return;
+  }
+
+  let subjectsObj = classData[sec];
+  let fullHtml = "";
+  let foundAny = false;
+
+  Object.keys(subjectsObj).forEach(subName => {
+    let subData = subjectsObj[subName];
+    let students = (subData.students || []).filter(s => 
+      s.name.toLowerCase().includes(q) && (!s.sec || s.sec === sec)
+    );
+
+    if (students.length > 0) {
+      foundAny = true;
+      fullHtml += `<div class="sub-header">📘 विषय: ${subName}</div>`;
+      fullHtml += `<table><tr><th>क्र.सं.</th><th>विद्यार्थीको नाम</th>`;
+      (subData.days || []).forEach(d => fullHtml += `<th colspan="3">${d}<br><small>HW | CW | DIS</small></th>`);
+      fullHtml += `<th>कुल अंक</th></tr>`;
+
+      students.forEach((st, i) => {
+        let sc = score(st);
+        fullHtml += `<tr><td>${i + 1}</td><td style="text-align:left;font-weight:bold">${st.name}</td>`;
+        (subData.days || []).forEach(d => {
+          let a = (st.m && st.m[d]) ? st.m[d] : {};
+          ['hw', 'cw', 'dis'].forEach(k => {
+            let v = a[k] || 0;
+            fullHtml += `<td class="${v == 1 ? 'green' : v == -1 ? 'red' : ''}">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+          });
+        });
+        fullHtml += `<td class="score ${sc >= 40 ? 'top' : sc < 25 ? 'low' : ''}">${sc}</td></tr>`;
       });
-    });
-    h += `<td class="score ${sc >= 40 ? 'top' : sc < 25 ? 'low' : ''}">${sc}</td></tr>`;
+      fullHtml += `</table>`;
+    }
   });
 
-  document.getElementById('tbl').innerHTML = h;
+  if (!foundAny) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;">यो नाम भएको विद्यार्थी भेटिएन।</div>';
+  } else {
+    container.innerHTML = fullHtml;
+  }
 }
 
 loadData();
