@@ -39,7 +39,7 @@
 
 <!-- १. विद्यार्थी तथा मिति व्यवस्थापन -->
 <div class="add-box">
-  <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ विद्यार्थी र नेपाली मिति व्यवस्थापन</h3>
+  <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ विद्यार्थी र नेपाली मिति (वि.सं.)</h3>
   <div class="grid">
     <div>
       <label>विद्यार्थीको नाम:</label>
@@ -56,12 +56,30 @@
       <button class="btn-add" onclick="addStudent()">+ विद्यार्थी थप्नुहोस्</button>
     </div>
     
-    <!-- ड्रपडाउन नेपाली मिति चयन (No External Calendar Required) -->
+    <!-- नेपाली मिति छान्ने स्पष्ट विकल्प -->
     <div>
-      <label>नेपाली मिति छान्नुहोस् (वि.सं.):</label>
+      <label>नेपाली मिति (साल - महिना - गते):</label>
       <div style="display:flex; gap:4px;">
-        <select id="npYear"></select>
-        <select id="npMonth"></select>
+        <select id="npYear">
+          <option value="२०८०">२०८०</option>
+          <option value="२०८१">२०८१</option>
+          <option value="२०८२">२०८२</option>
+          <option value="२०८३" selected>२०८३</option>
+        </select>
+        <select id="npMonth">
+          <option value="बैशाख">बैशाख</option>
+          <option value="जेठ">जेठ</option>
+          <option value="असार">असार</option>
+          <option value="साउन">साउन</option>
+          <option value="भदौ" selected>भदौ</option>
+          <option value="असोज">असोज</option>
+          <option value="कात्तिक">कात्तिक</option>
+          <option value="मंसिर">मंसिर</option>
+          <option value="पुस">पुस</option>
+          <option value="माघ">माघ</option>
+          <option value="फागुन">फागुन</option>
+          <option value="चैत">चैत</option>
+        </select>
         <select id="npDay"></select>
       </div>
     </div>
@@ -141,45 +159,21 @@ const SUBJECTS = {
 
 const defaultClass9Names = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
 
+const nepaliDigits = ['०','१','२','३','४','५','६','७','८','९'];
+
 let currentRoster = []; 
 let D = { m: {}, days: [] };
 
-// नेपाली मिति Dropdown भरिने फसन
-function setupNepaliDateSelectors() {
-  const yearSelect = document.getElementById('npYear');
-  const monthSelect = document.getElementById('npMonth');
+function setupNepaliDays() {
   const daySelect = document.getElementById('npDay');
-
-  yearSelect.innerHTML = '';
-  monthSelect.innerHTML = '';
   daySelect.innerHTML = '';
-
-  for (let y = 2080; y <= 2085; y++) {
-    let opt = document.createElement('option');
-    opt.value = y;
-    opt.textContent = y;
-    yearSelect.appendChild(opt);
-  }
-  yearSelect.value = 2083; // हालको नेपाली साल
-
-  const months = ['०१ (वैशाख)', '०२ (जेठ)', '०३ (असार)', '०४ (श्रावण)', '०५ (भाद्र)', '०६ (आश्विन)', '०७ (कार्तिक)', '०८ (मंसिर)', '०९ (पौष)', '१० (माघ)', '११ (फागुन)', '१२ (चैत)'];
-  months.forEach((m, idx) => {
-    let opt = document.createElement('option');
-    let val = String(idx + 1).padStart(2, '0');
-    opt.value = val;
-    opt.textContent = m;
-    monthSelect.appendChild(opt);
-  });
-  monthSelect.value = '05'; // भदौ महिना
-
   for (let d = 1; d <= 32; d++) {
     let opt = document.createElement('option');
-    let val = String(d).padStart(2, '0');
-    opt.value = val;
-    opt.textContent = d;
+    let nepNum = d.toString().split('').map(x => nepaliDigits[parseInt(x)]).join('');
+    opt.value = nepNum + ' गते';
+    opt.textContent = nepNum + ' गते';
     daySelect.appendChild(opt);
   }
-  daySelect.value = '06'; // गते
 }
 
 function getRosterKey(cls) { return `class_roster_C${cls}`; }
@@ -301,11 +295,11 @@ function addDay() {
   let m = document.getElementById('npMonth').value;
   let d = document.getElementById('npDay').value;
 
-  let bsDate = `${y}-${m}-${d}`;
+  // शुद्ध नेपाली मिति ढाँचा (उदा: भदौ ६, २०८३)
+  let bsDate = `${m} ${d}`;
 
   if (bsDate && !D.days.includes(bsDate)) { 
     D.days.push(bsDate); 
-    D.days.sort(); 
     saveSubjectData(); 
     render(); 
   } else if (D.days.includes(bsDate)) {
@@ -338,7 +332,7 @@ function render() {
 
   let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
   D.days.forEach(d => {
-    h += `<th colspan="3" style="border-bottom:1px solid #ffffff44;padding:6px;">${d}</th>`;
+    h += `<th colspan="3" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">${d}</th>`;
   });
   h += '<th rowspan="2">अंक</th></tr>';
 
@@ -427,7 +421,7 @@ function resetCurrentSubject() {
 }
 
 window.onload = function() {
-  setupNepaliDateSelectors();
+  setupNepaliDays();
   onClassChange();
 };
 </script>
