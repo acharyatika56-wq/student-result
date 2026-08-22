@@ -6,82 +6,88 @@
   <style>
     *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
     .card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px #0001}
-    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-    label{font-weight:bold;font-size:13px}
-    input,select,button{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+    .add-box{background:#e0f2fe;border:2px solid #0284c7;padding:15px;border-radius:10px;margin-bottom:15px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+    label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
+    input,select,button{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px}
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
-    .btn-pub{background:#159447}.danger{background:#c62828}
-    .add-btn{background:#0284c7;color:white;font-weight:bold}
+    .btn-add{background:#0284c7;color:white;font-weight:bold}
+    .btn-pub{background:#159447;font-size:16px;padding:12px}.danger{background:#c62828}
     table{border-collapse:collapse;width:100%;min-width:600px}
     th,td{border:1px solid #ddd;padding:6px;text-align:center}th{background:#173f78;color:white}
     .cell{font-size:20px;cursor:pointer;min-width:35px;user-select:none}
     .green{background:#effaf3;color:green}.red{background:#fff1f1;color:red}
-    .add-section{background:#e0f2fe;border:1px solid #bae6fd;padding:12px;border-radius:8px;margin-top:12px}
   </style>
 </head>
 <body>
 
 <h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
 
-<div class="card">
-  <div class="controls">
+<!-- १. नयाँ विद्यार्थी र मिति थप्ने मुख्य बक्स -->
+<div class="add-box">
+  <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ नयाँ विद्यार्थी / मिति थप्नुहोस्</h3>
+  <div class="grid">
     <div>
-      <label>कक्षा (Class)</label>
-      <select id="className" onchange="updateSubjects()">
-        <option value="8">Class 8</option>
-        <option value="9" selected>Class 9</option>
-        <option value="10">Class 10</option>
-      </select>
+      <label>विद्यार्थीको नाम:</label>
+      <input id="newStudent" placeholder="पूरा नाम लेख्नुहोस्...">
     </div>
     <div>
-      <label>सेक्सन (Filter)</label>
-      <select id="sectionFilter" onchange="render()">
-        <option value="ALL">सबै (ALL)</option>
-        <option value="Darwin">Darwin</option>
-        <option value="Newton">Newton</option>
-      </select>
-    </div>
-    <div>
-      <label>विषय (Subject)</label>
-      <select id="subject"></select>
-    </div>
-    <div><label>मिति छान्नुहोस्</label><input id="date" type="date"></div>
-  </div>
-
-  <!-- नयाँ विद्यार्थी र मिति थप्ने बक्स -->
-  <div class="add-section controls">
-    <div>
-      <label>विद्यार्थीको नाम</label>
-      <input id="newStudent" placeholder="विद्यार्थीको पूरा नाम...">
-    </div>
-    <div>
-      <label>विद्यार्थीको सेक्सन</label>
+      <label>सेक्सन:</label>
       <select id="newSec">
         <option value="Darwin">Darwin</option>
         <option value="Newton">Newton</option>
       </select>
     </div>
     <div style="align-self:end">
-      <button class="add-btn" onclick="addStudent()">➕ विद्यार्थी थप्नुहोस्</button>
+      <button class="btn-add" onclick="addStudent()">+ विद्यार्थी थप्नुहोस्</button>
+    </div>
+    <div>
+      <label>मिति:</label>
+      <input id="date" type="date">
     </div>
     <div style="align-self:end">
-      <button class="add-btn" onclick="addDay()">📅 मिति थप्नुहोस्</button>
+      <button class="btn-add" onclick="addDay()">+ मिति थप्नुहोस्</button>
     </div>
-  </div>
-  
-  <div style="margin-top:15px; display:flex; flex-wrap:wrap; gap:10px;">
-    <button class="btn-pub" onclick="publishData()" style="padding:12px;font-size:16px;">🌐 अनलाइन Publish गर्नुहोस्</button>
-    <button class="danger" onclick="resetAll()" style="width:auto;padding:10px 15px;">सबै Data हटाउनुहोस्</button>
   </div>
 </div>
 
+<!-- २. क्लास र फिल्टर रोज्ने बक्स -->
+<div class="card grid">
+  <div>
+    <label>कक्षा (Class):</label>
+    <select id="className" onchange="onClassOrSubjectChange()">
+      <option value="8">Class 8</option>
+      <option value="9" selected>Class 9</option>
+      <option value="10">Class 10</option>
+    </select>
+  </div>
+  <div>
+    <label>विषय (Subject):</label>
+    <select id="subject" onchange="loadCurrentSubjectData()"></select>
+  </div>
+  <div>
+    <label>सेक्सन (Filter):</label>
+    <select id="sectionFilter" onchange="render()">
+      <option value="ALL">सबै (ALL)</option>
+      <option value="Darwin">Darwin</option>
+      <option value="Newton">Newton</option>
+    </select>
+  </div>
+  <div style="align-self:end">
+    <button class="btn-pub" onclick="publishData()">🌐 Publish गर्नुहोस्</button>
+  </div>
+  <div style="align-self:end">
+    <button class="danger" onclick="resetCurrentSubject()">यो विषयको Data हटाउनुहोस्</button>
+  </div>
+</div>
+
+<!-- ३. टेबल -->
 <div class="card" style="overflow:auto">
   <table id="tbl"></table>
 </div>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzRceiAgW7MRrJtHTJ8u9a_VAw_IEow72UltTQGvR-kxScQZOElvRgpVdHkTX0C7dnY6g/exec";
-const KEY = 'dailyTeacherV5';
 
 const SUBJECTS = {
   "8": ["Math", "Science", "Nepali", "English-I", "English-II", "Social Studies", "Hamro Rapti"],
@@ -91,15 +97,23 @@ const SUBJECTS = {
 
 const defaultNames = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
 
-let D = JSON.parse(localStorage.getItem(KEY) || 'null') || { students: [], days: [] };
+let D = { students: [], days: [] };
 
-if (!D.students.length) {
-  D.students = defaultNames.map(n => ({ name: n, sec: 'Darwin', m: {} }));
+function getKey() {
+  let c = document.getElementById('className').value;
+  let s = document.getElementById('subject').value || 'General';
+  return `dailyTeacher_C${c}_S${s}`;
 }
 
-function updateSubjects() {
+function onClassOrSubjectChange() {
+  updateSubjectsList();
+  loadCurrentSubjectData();
+}
+
+function updateSubjectsList() {
   let cls = document.getElementById('className').value;
   let subSelect = document.getElementById('subject');
+  let prevSub = subSelect.value;
   subSelect.innerHTML = "";
   
   (SUBJECTS[cls] || []).forEach(sub => {
@@ -108,11 +122,30 @@ function updateSubjects() {
     opt.textContent = sub;
     subSelect.appendChild(opt);
   });
+  
+  if (prevSub && SUBJECTS[cls].includes(prevSub)) {
+    subSelect.value = prevSub;
+  }
+}
+
+function loadCurrentSubjectData() {
+  let key = getKey();
+  let saved = localStorage.getItem(key);
+  if (saved) {
+    D = JSON.parse(saved);
+  } else {
+    // नयाँ विषयको डाटा सुरु गर्दा default नामहरू ल्याउने (तर रेकर्ड खाली हुने)
+    D = {
+      students: defaultNames.map(n => ({ name: n, sec: 'Darwin', m: {} })),
+      days: []
+    };
+  }
+  render();
 }
 
 document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-updateSubjects();
-render();
+updateSubjectsList();
+loadCurrentSubjectData();
 
 function addStudent() {
   let e = document.getElementById('newStudent'), n = e.value.trim();
@@ -175,7 +208,9 @@ function render() {
   document.getElementById('tbl').innerHTML = h;
 }
 
-function save() { localStorage.setItem(KEY, JSON.stringify(D)); }
+function save() { 
+  localStorage.setItem(getKey(), JSON.stringify(D)); 
+}
 
 function publishData() {
   let payload = {
@@ -190,14 +225,15 @@ function publishData() {
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(payload)
   })
-  .then(() => {
-    alert("सफलतापूर्वक Publish भयो! अब Parents Portal मा हेर्नुहोस्।");
-  })
+  .then(() => alert("सफलतापूर्वक Publish भयो!"))
   .catch(e => alert("समस्या आयो: " + e));
 }
 
-function resetAll() {
-  if (confirm('सबै Data हटाउने?')) { localStorage.removeItem(KEY); location.reload(); }
+function resetCurrentSubject() {
+  if (confirm('यो विषयको Data हटाउने?')) { 
+    localStorage.removeItem(getKey()); 
+    loadCurrentSubjectData(); 
+  }
 }
 </script>
 </body>
