@@ -22,8 +22,9 @@
     .btn-del-icon{background:#ef4444}
     
     table{border-collapse:collapse;width:100%;min-width:650px}
-    th,td{border:1px solid #ddd;padding:6px;text-align:center}
+    th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
     th{background:#173f78;color:white}
+    .sub-th{background:#1e4c8a;font-size:11px;padding:4px;width:40px}
     .cell{font-size:18px;cursor:pointer;min-width:35px;user-select:none}
     .green{background:#effaf3;color:green}
     .red{background:#fff1f1;color:red}
@@ -281,18 +282,30 @@ function score(stId) {
   return z;
 }
 
+// २-लेयर टेबल हेडरसहितको नयाँ Render फन्क्सन
 function render() {
   let filterSec = document.getElementById('sectionFilter').value;
   let filteredStudents = currentRoster.filter(s => filterSec === 'ALL' || s.sec === filterSec);
 
-  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थीको नाम</th><th>सेक्सन</th>';
-  D.days.forEach(d => h += `<th colspan="3">${d}<br><small>HW|CW|DIS</small></th>`);
-  h += '<th>अंक</th></tr>';
+  // Row 1: मितिहरू
+  let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
+  D.days.forEach(d => {
+    h += `<th colspan="3" style="border-bottom:1px solid #ffffff44;padding:6px;">${d}</th>`;
+  });
+  h += '<th rowspan="2">अंक</th></tr>';
 
+  // Row 2: HW, CW, DIS का छुट्टाछुट्टै Header Columns
+  h += '<tr>';
+  D.days.forEach(() => {
+    h += '<th class="sub-th">HW</th><th class="sub-th">CW</th><th class="sub-th">DIS</th>';
+  });
+  h += '</tr></thead><tbody>';
+
+  // Data Rows
   filteredStudents.forEach((s, i) => {
     h += `<tr>
       <td>${i + 1}</td>
-      <td style="text-align:left;font-weight:bold">
+      <td style="text-align:left;font-weight:bold;padding-left:8px">
         ${s.name}
         <span class="action-btn-group">
           <button class="btn-icon btn-edit-icon" onclick="openEditModal('${s.id}')" title="Edit">✏️</button>
@@ -311,10 +324,10 @@ function render() {
     h += `<td><b>${score(s.id)}</b></td></tr>`;
   });
 
+  h += '</tbody>';
   document.getElementById('tbl').innerHTML = h;
 }
 
-// नयाँ सुरक्षित Publish फन्क्सन (CORS Block नहुने)
 function publishData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
