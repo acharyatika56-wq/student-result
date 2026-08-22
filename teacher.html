@@ -9,11 +9,14 @@
     .add-box{background:#e0f2fe;border:2px solid #0284c7;padding:15px;border-radius:10px;margin-bottom:15px}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
     label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
-    input,select,button{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+    input,select,button{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
     .btn-add{background:#0284c7;color:white;font-weight:bold}
-    .btn-pub{background:#159447;font-size:16px;padding:12px}.danger{background:#c62828}
-    table{border-collapse:collapse;width:100%;min-width:600px}
+    .btn-pub{background:#159447;font-size:15px;padding:10px}
+    .danger{background:#c62828}
+    .btn-edit{background:#eab308;color:#000;padding:3px 8px;font-size:12px;border-radius:4px;cursor:pointer;margin-right:4px}
+    .btn-del{background:#ef4444;color:white;padding:3px 8px;font-size:12px;border-radius:4px;cursor:pointer}
+    table{border-collapse:collapse;width:100%;min-width:650px}
     th,td{border:1px solid #ddd;padding:6px;text-align:center}th{background:#173f78;color:white}
     .cell{font-size:20px;cursor:pointer;min-width:35px;user-select:none}
     .green{background:#effaf3;color:green}.red{background:#fff1f1;color:red}
@@ -23,7 +26,7 @@
 
 <h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
 
-<!-- १. नयाँ विद्यार्थी र मिति थप्ने मुख्य बक्स -->
+<!-- १. नयाँ विद्यार्थी र मिति थप्ने बक्स -->
 <div class="add-box">
   <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ नयाँ विद्यार्थी / मिति थप्नुहोस्</h3>
   <div class="grid">
@@ -77,7 +80,7 @@
     <button class="btn-pub" onclick="publishData()">🌐 Publish गर्नुहोस्</button>
   </div>
   <div style="align-self:end">
-    <button class="danger" onclick="resetCurrentSubject()">यो विषयको Data हटाउनुहोस्</button>
+    <button class="danger" onclick="resetCurrentSubject()">यो विषयको Data Reset</button>
   </div>
 </div>
 
@@ -95,7 +98,8 @@ const SUBJECTS = {
   "10": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"]
 };
 
-const defaultNames = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
+// Class 9 को लागि मात्र अघिल्लो सुची डिफल्ट राखिएको छ, अन्य कक्षाको लागि खालीबाट सुरु हुन्छ।
+const defaultClass9Names = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
 
 let D = { students: [], days: [] };
 
@@ -131,14 +135,19 @@ function updateSubjectsList() {
 function loadCurrentSubjectData() {
   let key = getKey();
   let saved = localStorage.getItem(key);
+  let cls = document.getElementById('className').value;
+
   if (saved) {
     D = JSON.parse(saved);
   } else {
-    // नयाँ विषयको डाटा सुरु गर्दा default नामहरू ल्याउने (तर रेकर्ड खाली हुने)
-    D = {
-      students: defaultNames.map(n => ({ name: n, sec: 'Darwin', m: {} })),
-      days: []
-    };
+    if (cls === "9") {
+      D = {
+        students: defaultClass9Names.map(n => ({ name: n, sec: 'Darwin', m: {} })),
+        days: []
+      };
+    } else {
+      D = { students: [], days: [] };
+    }
   }
   render();
 }
@@ -154,6 +163,25 @@ function addStudent() {
   D.students.push({ name: n, sec: sec, m: {} });
   e.value = ''; save(); render();
   alert(n + ' थपियो!');
+}
+
+function editStudent(index) {
+  let currentName = D.students[index].name;
+  let newName = prompt("विद्यार्थीको नयाँ नाम लेख्नुहोस्:", currentName);
+  if (newName !== null && newName.trim() !== "") {
+    D.students[index].name = newName.trim();
+    save();
+    render();
+  }
+}
+
+function deleteStudent(index) {
+  let name = D.students[index].name;
+  if (confirm(`के तपाईं "${name}" लाई सूचीबाट हटाउन चाहनुहुन्छ?`)) {
+    D.students.splice(index, 1);
+    save();
+    render();
+  }
 }
 
 function addDay() {
@@ -190,12 +218,20 @@ function getFilteredStudents() {
 
 function render() {
   let filtered = getFilteredStudents();
-  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थी</th><th>सेक्सन</th>';
+  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थी</th><th>सेक्सन</th><th>कार्य (Action)</th>';
   D.days.forEach(d => h += `<th colspan="3">${d}<br><small>HW|CW|DIS</small></th>`);
   h += '<th>अंक</th></tr>';
 
   filtered.forEach((s, i) => {
-    h += `<tr><td>${i + 1}</td><td style="text-align:left;font-weight:bold">${s.name}</td><td>${s.sec || ''}</td>`;
+    h += `<tr>
+      <td>${i + 1}</td>
+      <td style="text-align:left;font-weight:bold">${s.name}</td>
+      <td>${s.sec || ''}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-edit" onclick="editStudent(${s.originalIndex})">✏️ Edit</button>
+        <button class="btn-del" onclick="deleteStudent(${s.originalIndex})">🗑️ Delete</button>
+      </td>`;
+    
     D.days.forEach(d => {
       let a = s.m[d] || {};
       ['hw', 'cw', 'dis'].forEach(k => {
