@@ -40,36 +40,33 @@
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyE6tTd6V0NyIw_-brrjhwgeP0vFBDBSwWbofx-ttw1m8_8t15DSUZP6VxALFcmbhvVvQ/exec";
-
 let P_DATA = null;
 
+function handleData(response) {
+  try {
+    let parsed = typeof response === 'string' ? JSON.parse(response) : response;
+    if (!parsed || !parsed.data || !parsed.data.students || parsed.data.students.length === 0) {
+      document.getElementById('subTitle').textContent = "अझै नतिजा Publish भएको छैन।";
+      document.getElementById('tbl').innerHTML = '<tr><td style="padding:20px;color:#c62828;">कुनै डाटा भेटिएन। पहिले Teacher Dashboard बाट Publish गर्नुहोस्।</td></tr>';
+      return;
+    }
+    P_DATA = parsed;
+    document.getElementById('title').textContent = `📊 कक्षा ${P_DATA.className || ''} — ${P_DATA.subject || ''}`;
+    document.getElementById('subTitle').textContent = `अन्तिम अद्यावधिक परिणाम`;
+    render();
+  } catch(e) {
+    document.getElementById('subTitle').textContent = "डाटा Format मा समस्या आयो।";
+  }
+}
+
 function loadData() {
-  fetch(API_URL)
-    .then(res => res.text())
-    .then(textData => {
-      try {
-        let parsed = typeof textData === 'string' ? JSON.parse(textData) : textData;
-        if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-
-        if (!parsed || !parsed.data || !parsed.data.students || parsed.data.students.length === 0) {
-          document.getElementById('subTitle').textContent = "अझै नतिजा Publish भएको छैन।";
-          document.getElementById('tbl').innerHTML = '<tr><td style="padding:20px;color:#c62828;">कुनै डाटा भेटिएन। पहिले Teacher Dashboard बाट Publish गर्नुहोस्।</td></tr>';
-          return;
-        }
-
-        P_DATA = parsed;
-        document.getElementById('title').textContent = `📊 कक्षा ${P_DATA.className || ''} — ${P_DATA.subject || ''}`;
-        document.getElementById('subTitle').textContent = `अन्तिम अद्यावधिक परिणाम`;
-        render();
-      } catch (e) {
-        document.getElementById('subTitle').textContent = "डाटा Format मा समस्या आयो।";
-        document.getElementById('tbl').innerHTML = '<tr><td style="padding:20px;color:#c62828;">डाटा पढ्न सकिएन। कृपया Teacher Panel बाट पुनः Publish गर्नुहोस्।</td></tr>';
-      }
-    })
-    .catch(err => {
-      document.getElementById('subTitle').textContent = "डाटा लोड गर्न सकिएन।";
-      document.getElementById('tbl').innerHTML = '<tr><td style="padding:20px;color:#c62828;">कनेक्सन भएन। नेटवर्क वा Apps Script URL जाँच्नुहोस्।</td></tr>';
-    });
+  let script = document.createElement('script');
+  script.src = API_URL + "?callback=handleData";
+  script.onerror = function() {
+    document.getElementById('subTitle').textContent = "डाटा लोड गर्न सकिएन।";
+    document.getElementById('tbl').innerHTML = '<tr><td style="padding:20px;color:#c62828;">कनेक्सन भएन। नेटवर्क वा Apps Script URL जाँच्नुहोस्।</td></tr>';
+  };
+  document.body.appendChild(script);
 }
 
 function score(s) {
