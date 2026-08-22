@@ -2,32 +2,35 @@
 <html lang="ne">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Student & Parent Report Portal</title>
+  <title>Parents View - Student Homework & Discipline Tracker</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
     .card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px #0001}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
     label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
-    input,select,button{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
-    table{border-collapse:collapse;width:100%;min-width:700px}
+    input,select{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+    
+    table{border-collapse:collapse;width:100%;min-width:650px}
     th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
-    th{background:#173f78;color:white;font-size:13px;white-space:nowrap}
-    .sub-th{background:#1e4c8a;font-size:11px;padding:4px}
-    .cell{font-size:16px;min-width:40px;user-select:none}
+    th{background:#173f78;color:white}
+    .sub-th{background:#1e4c8a;font-size:11px;padding:4px;width:35px}
+    .cell{font-size:18px;min-width:35px;user-select:none}
     .green{background:#effaf3;color:green}
     .red{background:#fff1f1;color:red}
-    .status-msg{text-align:center;font-weight:bold;padding:15px;color:#0284c7}
+
+    #status{text-align:center;padding:20px;font-weight:bold;color:#666}
   </style>
 </head>
 <body>
 
-<h2>🎓 विद्यार्थी र अभिभावक पोर्टल (Student & Parent Portal)</h2>
+<h2>👨‍👩‍👧 विद्यार्थी प्रगति विवरण (Parents Panel)</h2>
 
+<!-- १. फिल्टर र खोजी -->
 <div class="card grid">
   <div>
     <label>कक्षा (Class):</label>
-    <select id="className" onchange="onClassChange()">
+    <select id="className" onchange="fetchData()">
       <option value="8">Class 8</option>
       <option value="9" selected>Class 9</option>
       <option value="10">Class 10</option>
@@ -38,7 +41,7 @@
     <select id="subject" onchange="fetchData()"></select>
   </div>
   <div>
-    <label>सेक्सन (Section):</label>
+    <label>सेक्सन (Filter):</label>
     <select id="sectionFilter" onchange="render()">
       <option value="ALL">सबै (ALL)</option>
       <option value="Darwin">Darwin</option>
@@ -46,14 +49,15 @@
     </select>
   </div>
   <div>
-    <label>खोज्नुहोस् (Search Name):</label>
-    <input id="searchName" placeholder="विद्यार्थीको नाम..." oninput="render()">
+    <label>विद्यार्थीको नाम खोज्नुहोस्:</label>
+    <input id="searchName" placeholder="नाम टाइप गर्नुहोस्..." oninput="render()">
   </div>
 </div>
 
+<!-- २. मुख्य टेबल -->
 <div class="card" style="overflow:auto">
-  <div id="status" class="status-msg">डाटा लोड हुँदैछ...</div>
-  <table id="tbl" style="display:none"></table>
+  <div id="status">डाटा लोड हुँदैछ...</div>
+  <table id="tbl" style="display:none;"></table>
 </div>
 
 <script>
@@ -67,11 +71,6 @@ const SUBJECTS = {
 
 let currentData = { students: [], days: [] };
 
-function onClassChange() {
-  updateSubjectsList();
-  fetchData();
-}
-
 function updateSubjectsList() {
   let cls = document.getElementById('className').value;
   let subSelect = document.getElementById('subject');
@@ -84,45 +83,30 @@ function updateSubjectsList() {
   });
 }
 
-function handleResponse(data) {
-  let statusDiv = document.getElementById('status');
-  let tbl = document.getElementById('tbl');
-
-  if (data && data.students && data.students.length > 0) {
-    currentData = data;
-    statusDiv.style.display = "none";
-    tbl.style.display = "table";
-    render();
-  } else {
-    currentData = { students: [], days: [] };
-    statusDiv.style.display = "block";
-    statusDiv.textContent = "यो विषयको डाटा अझै Publish भएको छैन।";
-    tbl.style.display = "none";
-  }
-}
-
 function fetchData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
-  let statusDiv = document.getElementById('status');
-  let tbl = document.getElementById('tbl');
+  
+  document.getElementById('status').style.display = "block";
+  document.getElementById('status').textContent = "डाटा लोड हुँदैछ...";
+  document.getElementById('tbl').style.display = "none";
 
-  statusDiv.style.display = "block";
-  statusDiv.textContent = `Class ${cls} - ${sub} को डाटा लोड हुँदैछ...`;
-  tbl.style.display = "none";
-
-  let oldScript = document.getElementById('jsonpScript');
-  if (oldScript) oldScript.remove();
-
-  let script = document.createElement('script');
-  script.id = 'jsonpScript';
-  script.src = `${API_URL}?className=${encodeURIComponent(cls)}&subject=${encodeURIComponent(sub)}&callback=handleResponse`;
-  document.body.appendChild(script);
+  fetch(`${API_URL}?className=${cls}&subject=${sub}`)
+    .then(res => res.json())
+    .then(data => {
+      currentData = data || { students: [], days: [] };
+      render();
+    })
+    .catch(err => {
+      console.error(err);
+      document.getElementById('status').textContent = "डाटा लोड गर्न सकिएन। कृपया पुनः प्रयास गर्नुहोस्।";
+    });
 }
 
-function score(s) {
+function score(student) {
   let z = 0;
-  Object.values(s.m || {}).forEach(a => {
+  let studentMarks = student.m || {};
+  Object.values(studentMarks).forEach(a => {
     Object.values(a).forEach(v => z += v == 1 ? 5 : v == -1 ? -2.5 : 0);
   });
   return z;
@@ -134,13 +118,13 @@ function render() {
 
   let filtered = (currentData.students || []).filter(s => {
     let matchesSec = secFilter === 'ALL' || s.sec === secFilter;
-    let matchesName = s.name.toLowerCase().includes(search);
+    let matchesName = (s.name || '').toLowerCase().includes(search);
     return matchesSec && matchesName;
   });
 
-  if (filtered.length === 0) {
+  if (!filtered || filtered.length === 0) {
     document.getElementById('status').style.display = "block";
-    document.getElementById('status').textContent = "कुनै विद्यार्थी भेटिएन।";
+    document.getElementById('status').textContent = "कुनै विद्यार्थी भेटिएन वा डाटा उपलब्ध छैन।";
     document.getElementById('tbl').style.display = "none";
     return;
   }
@@ -148,25 +132,25 @@ function render() {
   document.getElementById('status').style.display = "none";
   document.getElementById('tbl').style.display = "table";
 
-  // १. माथिल्लो Row मा मितिहरू देखाउने
-  let h = '<tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
+  // १. पहिलो Row मा मितिहरू (वि.सं.)
+  let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
   (currentData.days || []).forEach(d => {
     h += `<th colspan="3" style="border-bottom:1px solid #ffffff44;padding:6px;">${d}</th>`;
   });
   h += '<th rowspan="2">अंक</th></tr>';
 
-  // २. दोस्रो Row मा HW, CW, DIS का छुट्टाछुट्टै Heading थप्ने
+  // २. दोस्रो Row मा HW, CW, DIS
   h += '<tr>';
   (currentData.days || []).forEach(() => {
     h += '<th class="sub-th">HW</th><th class="sub-th">CW</th><th class="sub-th">DIS</th>';
   });
-  h += '</tr>';
+  h += '</tr></thead><tbody>';
 
-  // ३. विद्यार्थीहरूको डाटा र टिक चिह्न
+  // ३. डेटा Rows (टिक/क्रस र अंक)
   filtered.forEach((s, i) => {
     h += `<tr>
       <td>${i + 1}</td>
-      <td style="text-align:left;font-weight:bold;padding-left:10px">${s.name}</td>
+      <td style="text-align:left;font-weight:bold;padding-left:8px">${s.name}</td>
       <td>${s.sec || ''}</td>`;
 
     (currentData.days || []).forEach(d => {
@@ -180,9 +164,11 @@ function render() {
     h += `<td><b>${score(s)}</b></td></tr>`;
   });
 
+  h += '</tbody>';
   document.getElementById('tbl').innerHTML = h;
 }
 
+// Initial Load
 updateSubjectsList();
 fetchData();
 </script>
