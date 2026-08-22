@@ -10,7 +10,6 @@
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
     label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
     input,select,button{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
-    button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
     table{border-collapse:collapse;width:100%;min-width:650px}
     th,td{border:1px solid #ddd;padding:8px;text-align:center}
     th{background:#173f78;color:white}
@@ -24,7 +23,6 @@
 
 <h2>🎓 विद्यार्थी र अभिभावक पोर्टल (Student & Parent Portal)</h2>
 
-<!-- फिल्टर सेक्सन -->
 <div class="card grid">
   <div>
     <label>कक्षा (Class):</label>
@@ -52,7 +50,6 @@
   </div>
 </div>
 
-<!-- डाटा टेबल -->
 <div class="card" style="overflow:auto">
   <div id="status" class="status-msg">डाटा लोड हुँदैछ...</div>
   <table id="tbl" style="display:none"></table>
@@ -86,6 +83,23 @@ function updateSubjectsList() {
   });
 }
 
+function handleResponse(data) {
+  let statusDiv = document.getElementById('status');
+  let tbl = document.getElementById('tbl');
+
+  if (data && data.students && data.students.length > 0) {
+    currentData = data;
+    statusDiv.style.display = "none";
+    tbl.style.display = "table";
+    render();
+  } else {
+    currentData = { students: [], days: [] };
+    statusDiv.style.display = "block";
+    statusDiv.textContent = "यो विषयको डाटा अझै Publish भएको छैन।";
+    tbl.style.display = "none";
+  }
+}
+
 function fetchData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
@@ -96,23 +110,13 @@ function fetchData() {
   statusDiv.textContent = `Class ${cls} - ${sub} को डाटा लोड हुँदैछ...`;
   tbl.style.display = "none";
 
-  fetch(`${API_URL}?className=${cls}&subject=${sub}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data && data.students) {
-        currentData = data;
-        statusDiv.style.display = "none";
-        tbl.style.display = "table";
-        render();
-      } else {
-        currentData = { students: [], days: [] };
-        statusDiv.textContent = "यो विषयको डाटा अझै Publish भएको छैन।";
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      statusDiv.textContent = "डाटा ल्याउँदा समस्या आयो। कृपया इन्टरनेट चेक गर्नुहोस्।";
-    });
+  let oldScript = document.getElementById('jsonpScript');
+  if (oldScript) oldScript.remove();
+
+  let script = document.createElement('script');
+  script.id = 'jsonpScript';
+  script.src = `${API_URL}?className=${encodeURIComponent(cls)}&subject=${encodeURIComponent(sub)}&callback=handleResponse`;
+  document.body.appendChild(script);
 }
 
 function score(s) {
@@ -169,7 +173,6 @@ function render() {
   document.getElementById('tbl').innerHTML = h;
 }
 
-// Initial Loading
 updateSubjectsList();
 fetchData();
 </script>
