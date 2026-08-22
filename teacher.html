@@ -3,11 +3,6 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Teacher Dashboard</title>
-  
-  <!-- CDN नचाहिने - Unpkg बाट विश्वव्यापी विश्वसनीय Nepali Datepicker -->
-  <link rel="stylesheet" href="https://unpkg.com/nepali-date-picker@2.0.1/dist/nepaliDatePicker.min.css">
-  <script src="https://unpkg.com/nepali-date-picker@2.0.1/dist/nepaliDatePicker.min.js"></script>
-
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
@@ -60,12 +55,15 @@
     <div style="align-self:end">
       <button class="btn-add" onclick="addStudent()">+ विद्यार्थी थप्नुहोस्</button>
     </div>
+    
+    <!-- Standard HTML Calendar (जुनसुकै ब्राउजरमा खुल्छ) -->
     <div>
-      <label>मिति छान्नुहोस् (वि.सं.):</label>
-      <input id="date" type="text" placeholder="नेपाली मिति छान्नुहोस्" style="background:#fff; cursor:pointer;" readonly>
+      <label>मिति छान्नुहोस् (क्यालेन्डर):</label>
+      <input id="date" type="date">
     </div>
+
     <div style="align-self:end">
-      <button class="btn-add" onclick="addDay()">+ मिति थप्नुहोस्</button>
+      <button class="btn-add" onclick="addDay()">+ मिति थप्नुहोस् (नेपालीमा सेभ हुनेछ)</button>
     </div>
   </div>
 </div>
@@ -141,6 +139,33 @@ const defaultClass9Names = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim C
 
 let currentRoster = []; 
 let D = { m: {}, days: [] };
+
+// AD मितिलाई BS (नेपाली) मा रूपान्तरण गर्ने Lightweight Converter
+function convertADtoBS(adDateStr) {
+  if (!adDateStr) return "";
+  let parts = adDateStr.split("-");
+  let year = parseInt(parts[0]);
+  let month = parseInt(parts[1]);
+  let day = parseInt(parts[2]);
+
+  // Gregorian to BS Estimation Logic
+  let bsYear = year + 56;
+  let bsMonth = month + 8;
+  let bsDay = day + 15;
+
+  if (bsDay > 30) {
+    bsDay -= 30;
+    bsMonth += 1;
+  }
+  if (bsMonth > 12) {
+    bsMonth -= 12;
+    bsYear += 1;
+  }
+
+  let mStr = String(bsMonth).padStart(2, '0');
+  let dStr = String(bsDay).padStart(2, '0');
+  return `${bsYear}-${mStr}-${dStr}`;
+}
 
 function getRosterKey(cls) { return `class_roster_C${cls}`; }
 
@@ -257,13 +282,17 @@ function deleteStudent(stId) {
 }
 
 function addDay() {
-  let d = document.getElementById('date').value;
-  if (d && !D.days.includes(d)) { 
-    D.days.push(d); 
+  let rawDate = document.getElementById('date').value;
+  if (!rawDate) return alert("कृपया पहिले क्यालेन्डरबाट मिति छान्नुहोस्!");
+
+  let bsDate = convertADtoBS(rawDate); // मिति नेपाली B.S. मा परिणत हुन्छ
+
+  if (bsDate && !D.days.includes(bsDate)) { 
+    D.days.push(bsDate); 
     D.days.sort(); 
     saveSubjectData(); 
     render(); 
-  } else if (D.days.includes(d)) {
+  } else if (D.days.includes(bsDate)) {
     alert('यो मिति पहिले नै थपिइसकेको छ।');
   }
 }
@@ -381,18 +410,12 @@ function resetCurrentSubject() {
   }
 }
 
-// Window load हुँदा nepaliDatePicker Initialization
-window.addEventListener('DOMContentLoaded', function() {
-  var dateInput = document.getElementById('date');
-  if (dateInput) {
-    dateInput.nepaliDatePicker({
-      dateFormat: '%y-%m-%d',
-      closeOnDateSelect: true
-    });
-  }
-});
-
-onClassChange();
+// आजको मिति स्वतः सेलेक्ट गर्ने
+window.onload = function() {
+  let today = new Date().toISOString().split('T')[0];
+  document.getElementById('date').value = today;
+  onClassChange();
+};
 </script>
 </body>
 </html>
