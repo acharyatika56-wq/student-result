@@ -4,7 +4,8 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Teacher Dashboard</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
     .card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px #0001}
     .add-box{background:#e0f2fe;border:2px solid #0284c7;padding:15px;border-radius:10px;margin-bottom:15px}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
@@ -14,21 +15,23 @@
     .btn-add{background:#0284c7;color:white;font-weight:bold}
     .btn-pub{background:#159447;font-size:15px;padding:10px}
     .danger{background:#c62828}
-    .btn-edit{background:#eab308;color:#000;padding:3px 8px;font-size:12px;border-radius:4px;cursor:pointer;margin-right:4px}
-    .btn-del{background:#ef4444;color:white;padding:3px 8px;font-size:12px;border-radius:4px;cursor:pointer}
-    table{border-collapse:collapse;width:100%;min-width:650px}
-    th,td{border:1px solid #ddd;padding:6px;text-align:center}th{background:#173f78;color:white}
+    .btn-edit{background:#f59e0b;color:white;padding:4px 8px;font-size:12px;border-radius:4px;cursor:pointer;margin-right:3px}
+    .btn-del{background:#ef4444;color:white;padding:4px 8px;font-size:12px;border-radius:4px;cursor:pointer}
+    table{border-collapse:collapse;width:100%;min-width:700px}
+    th,td{border:1px solid #ddd;padding:6px;text-align:center}
+    th{background:#173f78;color:white}
     .cell{font-size:20px;cursor:pointer;min-width:35px;user-select:none}
-    .green{background:#effaf3;color:green}.red{background:#fff1f1;color:red}
+    .green{background:#effaf3;color:green}
+    .red{background:#fff1f1;color:red}
   </style>
 </head>
 <body>
 
 <h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
 
-<!-- १. नयाँ विद्यार्थी र मिति थप्ने बक्स -->
+<!-- १. विद्यार्थी तथा मिति थप्ने/प्रबन्ध गर्ने सेक्सन -->
 <div class="add-box">
-  <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ नयाँ विद्यार्थी / मिति थप्नुहोस्</h3>
+  <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ विद्यार्थी र मिति व्यवस्थापन</h3>
   <div class="grid">
     <div>
       <label>विद्यार्थीको नाम:</label>
@@ -45,7 +48,7 @@
       <button class="btn-add" onclick="addStudent()">+ विद्यार्थी थप्नुहोस्</button>
     </div>
     <div>
-      <label>मिति:</label>
+      <label>मिति छान्नुहोस्:</label>
       <input id="date" type="date">
     </div>
     <div style="align-self:end">
@@ -54,11 +57,11 @@
   </div>
 </div>
 
-<!-- २. क्लास र फिल्टर रोज्ने बक्स -->
+<!-- २. कक्षा, विषय र फिल्टर सेक्सन -->
 <div class="card grid">
   <div>
     <label>कक्षा (Class):</label>
-    <select id="className" onchange="onClassOrSubjectChange()">
+    <select id="className" onchange="onClassChange()">
       <option value="8">Class 8</option>
       <option value="9" selected>Class 9</option>
       <option value="10">Class 10</option>
@@ -84,7 +87,7 @@
   </div>
 </div>
 
-<!-- ३. टेबल -->
+<!-- ३. मुख्य टेबल -->
 <div class="card" style="overflow:auto">
   <table id="tbl"></table>
 </div>
@@ -98,18 +101,60 @@ const SUBJECTS = {
   "10": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"]
 };
 
-// Class 9 को लागि मात्र अघिल्लो सुची डिफल्ट राखिएको छ, अन्य कक्षाको लागि खालीबाट सुरु हुन्छ।
+// Class 9 को प्रारम्भिक नामावली
 const defaultClass9Names = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
 
-let D = { students: [], days: [] };
+let currentRoster = []; // कक्षा अनुसारको साझा विद्यार्थी सूची
+let D = { m: {}, days: [] }; // छानिएको विषयको नतिजा र मिति
 
-function getKey() {
-  let c = document.getElementById('className').value;
-  let s = document.getElementById('subject').value || 'General';
-  return `dailyTeacher_C${c}_S${s}`;
+// १. कक्षा अनुसारका विद्यार्थी (Roster) व्यवस्थापन
+function getRosterKey(cls) {
+  return `class_roster_C${cls}`;
 }
 
-function onClassOrSubjectChange() {
+function loadClassRoster(cls) {
+  let saved = localStorage.getItem(getRosterKey(cls));
+  if (saved) {
+    currentRoster = JSON.parse(saved);
+  } else {
+    if (cls === "9") {
+      currentRoster = defaultClass9Names.map((n, i) => ({ id: "st_" + Date.now() + "_" + i, name: n, sec: 'Darwin' }));
+    } else {
+      currentRoster = [];
+    }
+    saveClassRoster(cls);
+  }
+}
+
+function saveClassRoster(cls) {
+  localStorage.setItem(getRosterKey(cls), JSON.stringify(currentRoster));
+}
+
+// २. विषय अनुसारको नतिजा डाटा
+function getSubjectKey() {
+  let c = document.getElementById('className').value;
+  let s = document.getElementById('subject').value || 'General';
+  return `dailyMarks_C${c}_S${s}`;
+}
+
+function loadCurrentSubjectData() {
+  let key = getSubjectKey();
+  let saved = localStorage.getItem(key);
+  if (saved) {
+    D = JSON.parse(saved);
+  } else {
+    D = { m: {}, days: [] };
+  }
+  render();
+}
+
+function saveSubjectData() {
+  localStorage.setItem(getSubjectKey(), JSON.stringify(D));
+}
+
+function onClassChange() {
+  let cls = document.getElementById('className').value;
+  loadClassRoster(cls);
   updateSubjectsList();
   loadCurrentSubjectData();
 }
@@ -117,7 +162,6 @@ function onClassOrSubjectChange() {
 function updateSubjectsList() {
   let cls = document.getElementById('className').value;
   let subSelect = document.getElementById('subject');
-  let prevSub = subSelect.value;
   subSelect.innerHTML = "";
   
   (SUBJECTS[cls] || []).forEach(sub => {
@@ -126,133 +170,139 @@ function updateSubjectsList() {
     opt.textContent = sub;
     subSelect.appendChild(opt);
   });
-  
-  if (prevSub && SUBJECTS[cls].includes(prevSub)) {
-    subSelect.value = prevSub;
-  }
 }
 
-function loadCurrentSubjectData() {
-  let key = getKey();
-  let saved = localStorage.getItem(key);
+// ३. विद्यार्थी थप्ने, सच्याउने र हटाउने
+function addStudent() {
   let cls = document.getElementById('className').value;
+  let nameInput = document.getElementById('newStudent');
+  let name = nameInput.value.trim();
+  let sec = document.getElementById('newSec').value;
 
-  if (saved) {
-    D = JSON.parse(saved);
-  } else {
-    if (cls === "9") {
-      D = {
-        students: defaultClass9Names.map(n => ({ name: n, sec: 'Darwin', m: {} })),
-        days: []
-      };
-    } else {
-      D = { students: [], days: [] };
-    }
+  if (!name) return alert('कृपया विद्यार्थीको नाम लेख्नुहोस्!');
+
+  let newSt = { id: "st_" + Date.now(), name: name, sec: sec };
+  currentRoster.push(newSt);
+  saveClassRoster(cls);
+
+  nameInput.value = '';
+  render();
+  alert(`"${name}" Class ${cls} मा थपियो! यो कक्षाका सबै विषयमा अब यो नाम देखिनेछ।`);
+}
+
+function editStudent(stId) {
+  let cls = document.getElementById('className').value;
+  let st = currentRoster.find(s => s.id === stId);
+  if (!st) return;
+
+  let newName = prompt("विद्यार्थीको नाम सम्पादन गर्नुहोस्:", st.name);
+  if (newName === null) return;
+  newName = newName.trim();
+  if (!newName) return alert("नाम खाली राख्न मिल्दैन।");
+
+  let newSec = prompt("सेक्सन परिवर्तन गर्नुहोस् (Darwin वा Newton):", st.sec);
+  if (newSec && (newSec === "Darwin" || newSec === "Newton")) {
+    st.sec = newSec;
   }
+
+  st.name = newName;
+  saveClassRoster(cls);
   render();
 }
 
-document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-updateSubjectsList();
-loadCurrentSubjectData();
+function deleteStudent(stId) {
+  let cls = document.getElementById('className').value;
+  let st = currentRoster.find(s => s.id === stId);
+  if (!st) return;
 
-function addStudent() {
-  let e = document.getElementById('newStudent'), n = e.value.trim();
-  let sec = document.getElementById('newSec').value;
-  if (!n) return alert('कृपया विद्यार्थीको नाम लेख्नुहोस्!');
-  D.students.push({ name: n, sec: sec, m: {} });
-  e.value = ''; save(); render();
-  alert(n + ' थपियो!');
-}
-
-function editStudent(index) {
-  let currentName = D.students[index].name;
-  let newName = prompt("विद्यार्थीको नयाँ नाम लेख्नुहोस्:", currentName);
-  if (newName !== null && newName.trim() !== "") {
-    D.students[index].name = newName.trim();
-    save();
+  if (confirm(`के तपाईं "${st.name}" लाई Class ${cls} को सूचीबाट हटाउन चाहनुहुन्छ?`)) {
+    currentRoster = currentRoster.filter(s => s.id !== stId);
+    saveClassRoster(cls);
     render();
   }
 }
 
-function deleteStudent(index) {
-  let name = D.students[index].name;
-  if (confirm(`के तपाईं "${name}" लाई सूचीबाट हटाउन चाहनुहुन्छ?`)) {
-    D.students.splice(index, 1);
-    save();
-    render();
-  }
-}
-
+// ४. दिन/मिति थप्ने र नतिजा चढाइने
 function addDay() {
   let d = document.getElementById('date').value;
   if (d && !D.days.includes(d)) { 
     D.days.push(d); 
     D.days.sort(); 
-    save(); 
+    saveSubjectData(); 
     render(); 
   } else if (D.days.includes(d)) {
     alert('यो मिति पहिले नै थपिइसकेको छ।');
   }
 }
 
-function clickCell(studentIndex, d, k) {
-  let s = D.students[studentIndex];
-  let a = s.m[d] || {};
+function clickCell(stId, d, k) {
+  if (!D.m[stId]) D.m[stId] = {};
+  let a = D.m[stId][d] || {};
   let v = a[k] || 0;
   a[k] = v === 0 ? 1 : v === 1 ? -1 : 0;
-  s.m[d] = a; save(); render();
+  D.m[stId][d] = a; 
+  saveSubjectData(); 
+  render();
 }
 
-function score(s) {
+function score(stId) {
   let z = 0;
-  Object.values(s.m || {}).forEach(a => Object.values(a).forEach(v => z += v == 1 ? 5 : v == -1 ? -2.5 : 0));
+  let studentMarks = D.m[stId] || {};
+  Object.values(studentMarks).forEach(a => {
+    Object.values(a).forEach(v => z += v == 1 ? 5 : v == -1 ? -2.5 : 0);
+  });
   return z;
 }
 
-function getFilteredStudents() {
-  let f = document.getElementById('sectionFilter').value;
-  if (f === 'ALL') return D.students.map((s, idx) => ({ ...s, originalIndex: idx }));
-  return D.students.map((s, idx) => ({ ...s, originalIndex: idx })).filter(s => s.sec === f);
-}
-
 function render() {
-  let filtered = getFilteredStudents();
-  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थी</th><th>सेक्सन</th><th>कार्य (Action)</th>';
+  let filterSec = document.getElementById('sectionFilter').value;
+  let filteredStudents = currentRoster.filter(s => filterSec === 'ALL' || s.sec === filterSec);
+
+  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थीको नाम</th><th>सेक्सन</th><th>सम्पादन (Action)</th>';
   D.days.forEach(d => h += `<th colspan="3">${d}<br><small>HW|CW|DIS</small></th>`);
   h += '<th>अंक</th></tr>';
 
-  filtered.forEach((s, i) => {
+  filteredStudents.forEach((s, i) => {
     h += `<tr>
       <td>${i + 1}</td>
       <td style="text-align:left;font-weight:bold">${s.name}</td>
-      <td>${s.sec || ''}</td>
+      <td>${s.sec}</td>
       <td style="white-space:nowrap">
-        <button class="btn-edit" onclick="editStudent(${s.originalIndex})">✏️ Edit</button>
-        <button class="btn-del" onclick="deleteStudent(${s.originalIndex})">🗑️ Delete</button>
+        <button class="btn-edit" onclick="editStudent('${s.id}')">✏️ Edit</button>
+        <button class="btn-del" onclick="deleteStudent('${s.id}')">🗑️ Delete</button>
       </td>`;
     
     D.days.forEach(d => {
-      let a = s.m[d] || {};
+      let a = (D.m[s.id] && D.m[s.id][d]) ? D.m[s.id][d] : {};
       ['hw', 'cw', 'dis'].forEach(k => {
         let v = a[k] || 0;
-        h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}" onclick="clickCell(${s.originalIndex},'${d}','${k}')">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+        h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}" onclick="clickCell('${s.id}','${d}','${k}')">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
       });
     });
-    h += `<td><b>${score(s)}</b></td></tr>`;
+    h += `<td><b>${score(s.id)}</b></td></tr>`;
   });
+
   document.getElementById('tbl').innerHTML = h;
 }
 
-function save() { 
-  localStorage.setItem(getKey(), JSON.stringify(D)); 
-}
-
 function publishData() {
+  let cls = document.getElementById('className').value;
+  let sub = document.getElementById('subject').value;
+
+  // Publish गर्दा Roster र Marks जोडेर पठाउने
+  let formattedStudents = currentRoster.map(st => ({
+    name: st.name,
+    sec: st.sec,
+    m: D.m[st.id] || {}
+  }));
+
   let payload = {
-    className: document.getElementById('className').value,
-    subject: document.getElementById('subject').value,
-    data: D
+    className: cls,
+    subject: sub,
+    data: {
+      students: formattedStudents,
+      days: D.days
+    }
   };
 
   fetch(API_URL, {
@@ -261,16 +311,20 @@ function publishData() {
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(payload)
   })
-  .then(() => alert("सफलतापूर्वक Publish भयो!"))
+  .then(() => alert(`Class ${cls} - ${sub} को डाटा सफलतापूर्वक Publish भयो!`))
   .catch(e => alert("समस्या आयो: " + e));
 }
 
 function resetCurrentSubject() {
-  if (confirm('यो विषयको Data हटाउने?')) { 
-    localStorage.removeItem(getKey()); 
+  if (confirm('यो विषयको डाटा/अंकहरू मात्र हटाउने? (विद्यार्थीको नामावली हट्ने छैन)')) { 
+    localStorage.removeItem(getSubjectKey()); 
     loadCurrentSubjectData(); 
   }
 }
+
+// Initial Loading
+document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+onClassChange();
 </script>
 </body>
 </html>
