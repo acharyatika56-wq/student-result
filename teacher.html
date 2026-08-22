@@ -15,21 +15,30 @@
     .btn-add{background:#0284c7;color:white;font-weight:bold}
     .btn-pub{background:#159447;font-size:15px;padding:10px}
     .danger{background:#c62828}
-    .btn-edit{background:#f59e0b;color:white;padding:4px 8px;font-size:12px;border-radius:4px;cursor:pointer;margin-right:3px}
-    .btn-del{background:#ef4444;color:white;padding:4px 8px;font-size:12px;border-radius:4px;cursor:pointer}
-    table{border-collapse:collapse;width:100%;min-width:700px}
+    
+    /* नामको छेउमा रहने ससाना बटनको CSS */
+    .action-btn-group{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
+    .btn-icon{padding:2px 6px;font-size:11px;border-radius:4px;cursor:pointer;border:none;color:white;line-height:1.2}
+    .btn-edit-icon{background:#f59e0b}
+    .btn-del-icon{background:#ef4444}
+    
+    table{border-collapse:collapse;width:100%;min-width:650px}
     th,td{border:1px solid #ddd;padding:6px;text-align:center}
     th{background:#173f78;color:white}
-    .cell{font-size:20px;cursor:pointer;min-width:35px;user-select:none}
+    .cell{font-size:18px;cursor:pointer;min-width:35px;user-select:none}
     .green{background:#effaf3;color:green}
     .red{background:#fff1f1;color:red}
+
+    /* Modal Style */
+    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000}
+    .modal-box{background:white;padding:20px;border-radius:8px;width:300px;box-shadow:0 4px 15px #0003}
   </style>
 </head>
 <body>
 
 <h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
 
-<!-- १. विद्यार्थी तथा मिति थप्ने/प्रबन्ध गर्ने सेक्सन -->
+<!-- १. विद्यार्थी तथा मिति व्यवस्थापन -->
 <div class="add-box">
   <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ विद्यार्थी र मिति व्यवस्थापन</h3>
   <div class="grid">
@@ -57,7 +66,7 @@
   </div>
 </div>
 
-<!-- २. कक्षा, विषय र फिल्टर सेक्सन -->
+<!-- २. कक्षा, विषय र फिल्टर -->
 <div class="card grid">
   <div>
     <label>कक्षा (Class):</label>
@@ -92,6 +101,29 @@
   <table id="tbl"></table>
 </div>
 
+<!-- ४. Edit Popup (Modal) -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 style="margin-top:0">विद्यार्थी सच्याउनुहोस्</h3>
+    <input type="hidden" id="editStId">
+    <div style="margin-bottom:10px">
+      <label>नाम:</label>
+      <input id="editStName" type="text">
+    </div>
+    <div style="margin-bottom:15px">
+      <label>सेक्सन:</label>
+      <select id="editStSec">
+        <option value="Darwin">Darwin</option>
+        <option value="Newton">Newton</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button style="background:#159447" onclick="saveEdit()">Save</button>
+      <button style="background:#666" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzRceiAgW7MRrJtHTJ8u9a_VAw_IEow72UltTQGvR-kxScQZOElvRgpVdHkTX0C7dnY6g/exec";
 
@@ -101,16 +133,12 @@ const SUBJECTS = {
   "10": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"]
 };
 
-// Class 9 को प्रारम्भिक नामावली
 const defaultClass9Names = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
 
-let currentRoster = []; // कक्षा अनुसारको साझा विद्यार्थी सूची
-let D = { m: {}, days: [] }; // छानिएको विषयको नतिजा र मिति
+let currentRoster = []; 
+let D = { m: {}, days: [] };
 
-// १. कक्षा अनुसारका विद्यार्थी (Roster) व्यवस्थापन
-function getRosterKey(cls) {
-  return `class_roster_C${cls}`;
-}
+function getRosterKey(cls) { return `class_roster_C${cls}`; }
 
 function loadClassRoster(cls) {
   let saved = localStorage.getItem(getRosterKey(cls));
@@ -130,7 +158,6 @@ function saveClassRoster(cls) {
   localStorage.setItem(getRosterKey(cls), JSON.stringify(currentRoster));
 }
 
-// २. विषय अनुसारको नतिजा डाटा
 function getSubjectKey() {
   let c = document.getElementById('className').value;
   let s = document.getElementById('subject').value || 'General';
@@ -138,13 +165,8 @@ function getSubjectKey() {
 }
 
 function loadCurrentSubjectData() {
-  let key = getSubjectKey();
-  let saved = localStorage.getItem(key);
-  if (saved) {
-    D = JSON.parse(saved);
-  } else {
-    D = { m: {}, days: [] };
-  }
+  let saved = localStorage.getItem(getSubjectKey());
+  D = saved ? JSON.parse(saved) : { m: {}, days: [] };
   render();
 }
 
@@ -163,7 +185,6 @@ function updateSubjectsList() {
   let cls = document.getElementById('className').value;
   let subSelect = document.getElementById('subject');
   subSelect.innerHTML = "";
-  
   (SUBJECTS[cls] || []).forEach(sub => {
     let opt = document.createElement('option');
     opt.value = sub;
@@ -172,7 +193,6 @@ function updateSubjectsList() {
   });
 }
 
-// ३. विद्यार्थी थप्ने, सच्याउने र हटाउने
 function addStudent() {
   let cls = document.getElementById('className').value;
   let nameInput = document.getElementById('newStudent');
@@ -187,27 +207,37 @@ function addStudent() {
 
   nameInput.value = '';
   render();
-  alert(`"${name}" Class ${cls} मा थपियो! यो कक्षाका सबै विषयमा अब यो नाम देखिनेछ।`);
 }
 
-function editStudent(stId) {
-  let cls = document.getElementById('className').value;
+function openEditModal(stId) {
   let st = currentRoster.find(s => s.id === stId);
   if (!st) return;
+  document.getElementById('editStId').value = st.id;
+  document.getElementById('editStName').value = st.name;
+  document.getElementById('editStSec').value = st.sec;
+  document.getElementById('editModal').style.display = 'flex';
+}
 
-  let newName = prompt("विद्यार्थीको नाम सम्पादन गर्नुहोस्:", st.name);
-  if (newName === null) return;
-  newName = newName.trim();
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+
+function saveEdit() {
+  let cls = document.getElementById('className').value;
+  let stId = document.getElementById('editStId').value;
+  let newName = document.getElementById('editStName').value.trim();
+  let newSec = document.getElementById('editStSec').value;
+
   if (!newName) return alert("नाम खाली राख्न मिल्दैन।");
 
-  let newSec = prompt("सेक्सन परिवर्तन गर्नुहोस् (Darwin वा Newton):", st.sec);
-  if (newSec && (newSec === "Darwin" || newSec === "Newton")) {
+  let st = currentRoster.find(s => s.id === stId);
+  if (st) {
+    st.name = newName;
     st.sec = newSec;
+    saveClassRoster(cls);
+    render();
   }
-
-  st.name = newName;
-  saveClassRoster(cls);
-  render();
+  closeEditModal();
 }
 
 function deleteStudent(stId) {
@@ -215,14 +245,13 @@ function deleteStudent(stId) {
   let st = currentRoster.find(s => s.id === stId);
   if (!st) return;
 
-  if (confirm(`के तपाईं "${st.name}" लाई Class ${cls} को सूचीबाट हटाउन चाहनुहुन्छ?`)) {
+  if (confirm(`के तपाईं "${st.name}" लाई हटाउन चाहनुहुन्छ?`)) {
     currentRoster = currentRoster.filter(s => s.id !== stId);
     saveClassRoster(cls);
     render();
   }
 }
 
-// ४. दिन/मिति थप्ने र नतिजा चढाइने
 function addDay() {
   let d = document.getElementById('date').value;
   if (d && !D.days.includes(d)) { 
@@ -258,19 +287,21 @@ function render() {
   let filterSec = document.getElementById('sectionFilter').value;
   let filteredStudents = currentRoster.filter(s => filterSec === 'ALL' || s.sec === filterSec);
 
-  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थीको नाम</th><th>सेक्सन</th><th>सम्पादन (Action)</th>';
+  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थीको नाम</th><th>सेक्सन</th>';
   D.days.forEach(d => h += `<th colspan="3">${d}<br><small>HW|CW|DIS</small></th>`);
   h += '<th>अंक</th></tr>';
 
   filteredStudents.forEach((s, i) => {
     h += `<tr>
       <td>${i + 1}</td>
-      <td style="text-align:left;font-weight:bold">${s.name}</td>
-      <td>${s.sec}</td>
-      <td style="white-space:nowrap">
-        <button class="btn-edit" onclick="editStudent('${s.id}')">✏️ Edit</button>
-        <button class="btn-del" onclick="deleteStudent('${s.id}')">🗑️ Delete</button>
-      </td>`;
+      <td style="text-align:left;font-weight:bold">
+        ${s.name}
+        <span class="action-btn-group">
+          <button class="btn-icon btn-edit-icon" onclick="openEditModal('${s.id}')" title="Edit">✏️</button>
+          <button class="btn-icon btn-del-icon" onclick="deleteStudent('${s.id}')" title="Delete">🗑️</button>
+        </span>
+      </td>
+      <td>${s.sec}</td>`;
     
     D.days.forEach(d => {
       let a = (D.m[s.id] && D.m[s.id][d]) ? D.m[s.id][d] : {};
@@ -289,7 +320,6 @@ function publishData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
 
-  // Publish गर्दा Roster र Marks जोडेर पठाउने
   let formattedStudents = currentRoster.map(st => ({
     name: st.name,
     sec: st.sec,
@@ -316,13 +346,12 @@ function publishData() {
 }
 
 function resetCurrentSubject() {
-  if (confirm('यो विषयको डाटा/अंकहरू मात्र हटाउने? (विद्यार्थीको नामावली हट्ने छैन)')) { 
+  if (confirm('यो विषयको डाटा/अंकहरू मात्र हटाउने?')) { 
     localStorage.removeItem(getSubjectKey()); 
     loadCurrentSubjectData(); 
   }
 }
 
-// Initial Loading
 document.getElementById('date').value = new Date().toISOString().slice(0, 10);
 onClassChange();
 </script>
