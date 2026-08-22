@@ -24,10 +24,20 @@
     .btn-pub{background:#159447;font-size:15px;padding:10px}
     .danger{background:#c62828}
     
-    /* द्रुत कार्य (Quick Actions) बटनहरूको स्टाइल */
-    .quick-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
-    .btn-quick-green{background:#16a34a;font-size:12px;padding:6px 10px;width:auto}
-    .btn-quick-reset{background:#64748b;font-size:12px;padding:6px 10px;width:auto}
+    /* प्रत्येक कोलमको माथि रहने हरियो टिक बटनको स्टाइल */
+    .btn-col-green {
+      background: #16a34a;
+      color: white;
+      border: none;
+      padding: 2px 6px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 3px;
+      display: inline-block;
+      font-weight: bold;
+    }
+    .btn-col-green:hover { background: #15803d; }
 
     .action-btn-group{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
     .btn-icon{padding:2px 6px;font-size:11px;border-radius:4px;cursor:pointer;border:none;color:white;line-height:1.2}
@@ -338,14 +348,12 @@ function clickCell(stId, d, k) {
   render();
 }
 
-// 🟢 नयाँ फिचर: कुनै विशेष दिनको सबै विद्यार्थीलाई एकैचोटि हरियो टिक वा खाली गर्ने
-function setAllForDay(d, val) {
+// कुनै विशेष मितिको विशेष कोलम (HW/CW/DIS) मा सबैलाई हरियो टिक लगाउने
+function setColumnAllGreen(d, colKey) {
   currentRoster.forEach(s => {
     if (!D.m[s.id]) D.m[s.id] = {};
     if (!D.m[s.id][d]) D.m[s.id][d] = {};
-    ['hw', 'cw', 'dis'].forEach(k => {
-      D.m[s.id][d][k] = val; // val = 1 (Green Tick) वा 0 (Reset)
-    });
+    D.m[s.id][d][colKey] = 1; // 1 भनेको हरियो टिक (✓)
   });
   saveSubjectData();
   render();
@@ -371,18 +379,15 @@ function render() {
 
   let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
   D.days.forEach(d => {
-    h += `<th colspan="4" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">
-            ${d}
-            <div class="quick-actions">
-              <button class="btn-quick-green" onclick="setAllForDay('${d}', 1)" title="सबैलाई हरियो टिक दिनुहोस्">সবै ✓</button>
-              <button class="btn-quick-reset" onclick="setAllForDay('${d}', 0)" title="खाली गर्नुहोस्">Reset</button>
-            </div>
-          </th>`;
+    h += `<th colspan="4" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">${d}</th>`;
   });
   h += '</tr><tr>';
   
-  D.days.forEach(() => {
-    h += '<th class="sub-th">HW</th><th class="sub-th">CW</th><th class="sub-th">DIS</th><th class="score-th">अंक</th>';
+  D.days.forEach(d => {
+    h += `<th class="sub-th">HW<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'hw')" title="HW मा सबैलाई हरियो टिक दिनुहोस्">✓</button></th>` +
+         `<th class="sub-th">CW<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'cw')" title="CW मा सबैलाई हरियो टिक दिनुहोस्">✓</button></th>` +
+         `<th class="sub-th">DIS<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'dis')" title="DIS मा सबैलाई हरियो टिक दिनुहोस्">✓</button></th>` +
+         `<th class="score-th">अंक</th>`;
   });
   h += '</tr></thead><tbody>';
 
@@ -398,7 +403,6 @@ function render() {
       </td>
       <td>${s.sec}</td>`;
     
-    D.days.days = D.days || [];
     D.days.forEach((d, dayIndex) => {
       let a = (D.m[s.id] && D.m[s.id][d]) ? D.m[s.id][d] : {};
       ['hw', 'cw', 'dis'].forEach(k => {
