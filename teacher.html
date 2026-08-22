@@ -2,95 +2,68 @@
 <html lang="ne">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Teacher Dashboard</title>
+  <title>Parents Dashboard</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
-    .card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px #0001}
-    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-    label{font-weight:bold;font-size:13px}
-    input,select,button{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
-    button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
-    .btn-pub{background:#159447}.danger{background:#c62828}
-    table{border-collapse:collapse;width:100%;min-width:600px}
-    th,td{border:1px solid #ddd;padding:6px;text-align:center}th{background:#173f78;color:white}
-    .cell{font-size:20px;cursor:pointer;min-width:35px;user-select:none}
-    .green{background:#effaf3;color:green}.red{background:#fff1f1;color:red}
+    *{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:12px}
+    .header{background:#1e3a8a;color:white;padding:16px;border-radius:10px;text-align:center;margin-bottom:15px}
+    .card{background:white;border-radius:10px;padding:14px;box-shadow:0 2px 8px #0001;margin-bottom:15px}
+    select,input{padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;width:100%;margin-top:4px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+    table{border-collapse:collapse;width:100%;min-width:650px;margin-bottom:15px}
+    th,td{border:1px solid #e2e8f0;padding:8px;text-align:center;font-size:13px}
+    th{background:#3b82f6;color:white}
+    .green{color:#16a34a;font-weight:bold}
+    .red{color:#dc2626;font-weight:bold}
+    .sub-header{background:#1d4ed8;color:white;font-size:15px;text-align:left;padding:8px 12px;border-radius:6px 6px 0 0;font-weight:bold;margin-top:15px}
   </style>
 </head>
 <body>
 
-<h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
+<div class="header">
+  <h2 style="margin:0">📊 विद्यार्थी नतिजा तथा रिपोर्ट पोर्टल</h2>
+  <div id="subTitle" style="font-size:13px;margin-top:4px">डाटा लोड हुँदैछ...</div>
+</div>
 
-<div class="card">
-  <div class="controls">
-    <div><label>कक्षा</label><input id="className" value="९"></div>
-    <div>
-      <label>सेक्सन (Filter)</label>
-      <select id="sectionFilter" onchange="render()">
-        <option value="ALL">सबै (ALL)</option>
-        <option value="Darwin">Darwin</option>
-        <option value="Einstein">Newton</option>
-      </select>
-    </div>
-    <div><label>विषय</label><input id="subject" value="गणित"></div>
-    <div><label>मिति</label><input id="date" type="date"></div>
-    <div><label>नयाँ विद्यार्थी</label><input id="newStudent" placeholder="नाम"></div>
-    <div>
-      <label>सेक्सन</label>
-      <select id="newSec">
-        <option value="Darwin">Darwin</option>
-        <option value="Einstein">Newton</option>
-      </select>
-    </div>
+<div class="card grid">
+  <div>
+    <label><b>कक्षा (Class):</b></label>
+    <select id="selClass" onchange="render()">
+      <option value="8">Class 8</option>
+      <option value="9">Class 9</option>
+      <option value="10">Class 10</option>
+    </select>
   </div>
-  
-  <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px;">
-    <button onclick="addStudent()">+ विद्यार्थी थप्नुहोस्</button>
-    <button onclick="addDay()">+ मिति थप्नुहोस्</button>
-    <button class="btn-pub" onclick="publishData()">🌐 अनलाइन Publish गर्नुहोस्</button>
-    <button class="danger" onclick="resetAll()">सबै Data हटाउनुहोस्</button>
+  <div>
+    <label><b>सेक्सन (Section):</b></label>
+    <select id="selSec" onchange="render()">
+      <option value="Darwin">Darwin</option>
+      <option value="Newton">Newton</option>
+    </select>
+  </div>
+  <div>
+    <label><b>विद्यार्थीको नाम खोज्नुहोस्:</b></label>
+    <input id="searchName" placeholder="नाम लेख्नुहोस्..." oninput="render()">
   </div>
 </div>
 
-<div class="card" style="overflow:auto">
-  <table id="tbl"></table>
+<div class="card" style="overflow-x:auto" id="container">
+  <div style="padding:20px;text-align:center;">डाटा लोड हुँदैछ, कृपया १ छिन पर्खिनुहोस्...</div>
 </div>
 
 <script>
-// नयाँ Google Apps Script Web App URL
 const API_URL = "https://script.google.com/macros/s/AKfycbzRceiAgW7MRrJtHTJ8u9a_VAw_IEow72UltTQGvR-kxScQZOElvRgpVdHkTX0C7dnY6g/exec";
-const KEY = 'dailyTeacherV5';
+let DB = {};
 
-const defaultNames = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
-
-let D = JSON.parse(localStorage.getItem(KEY) || 'null') || { students: [], days: [] };
-
-if (!D.students.length) {
-  D.students = defaultNames.map(n => ({ name: n, sec: 'Darwin', m: {} }));
+function handleData(res) {
+  DB = typeof res === 'string' ? JSON.parse(res) : res;
+  document.getElementById('subTitle').textContent = "अन्तिम अद्यावधिक नतिजा";
+  render();
 }
 
-document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-render();
-
-function addStudent() {
-  let e = document.getElementById('newStudent'), n = e.value.trim();
-  let sec = document.getElementById('newSec').value;
-  if (!n) return alert('नाम लेख्नुहोस्');
-  D.students.push({ name: n, sec: sec, m: {} });
-  e.value = ''; save(); render();
-}
-
-function addDay() {
-  let d = document.getElementById('date').value;
-  if (d && !D.days.includes(d)) { D.days.push(d); D.days.sort(); save(); render(); }
-}
-
-function clickCell(studentIndex, d, k) {
-  let s = D.students[studentIndex];
-  let a = s.m[d] || {};
-  let v = a[k] || 0;
-  a[k] = v === 0 ? 1 : v === 1 ? -1 : 0;
-  s.m[d] = a; save(); render();
+function loadData() {
+  let script = document.createElement('script');
+  script.src = API_URL + "?callback=handleData";
+  document.body.appendChild(script);
 }
 
 function score(s) {
@@ -99,56 +72,56 @@ function score(s) {
   return z;
 }
 
-function getFilteredStudents() {
-  let f = document.getElementById('sectionFilter').value;
-  if (f === 'ALL') return D.students.map((s, idx) => ({ ...s, originalIndex: idx }));
-  return D.students.map((s, idx) => ({ ...s, originalIndex: idx })).filter(s => s.sec === f);
-}
-
 function render() {
-  let filtered = getFilteredStudents();
-  let h = '<tr><th>क्र.सं.</th><th>विद्यार्थी</th><th>सेक्सन</th>';
-  D.days.forEach(d => h += `<th colspan="3">${d}<br><small>HW|CW|DIS</small></th>`);
-  h += '<th>अंक</th></tr>';
+  let c = document.getElementById('selClass').value;
+  let sec = document.getElementById('selSec').value;
+  let q = document.getElementById('searchName').value.toLowerCase().trim();
+  let container = document.getElementById('container');
 
-  filtered.forEach((s, i) => {
-    h += `<tr><td>${i + 1}</td><td style="text-align:left;font-weight:bold">${s.name}</td><td>${s.sec || ''}</td>`;
-    D.days.forEach(d => {
-      let a = s.m[d] || {};
-      ['hw', 'cw', 'dis'].forEach(k => {
-        let v = a[k] || 0;
-        h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}" onclick="clickCell(${s.originalIndex},'${d}','${k}')">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+  if (!DB[c] || !DB[c][sec]) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;color:#dc2626;">यो कक्षा र सेक्सनको डाटा अझै Publish भएको छैन।</div>';
+    return;
+  }
+
+  let subjectsObj = DB[c][sec];
+  let fullHtml = "";
+  let foundAny = false;
+
+  Object.keys(subjectsObj).forEach(subName => {
+    let subData = subjectsObj[subName];
+    let students = (subData.students || []).filter(s => s.name.toLowerCase().includes(q));
+
+    if (students.length > 0) {
+      foundAny = true;
+      fullHtml += `<div class="sub-header">📘 विषय: ${subName}</div>`;
+      fullHtml += `<table><tr><th>क्र.सं.</th><th>विद्यार्थीको नाम</th>`;
+      (subData.days || []).forEach(d => fullHtml += `<th colspan="3">${d}<br><small>HW|CW|DIS</small></th>`);
+      fullHtml += `<th>अङ्क</th></tr>`;
+
+      students.forEach((st, i) => {
+        let sc = score(st);
+        fullHtml += `<tr><td>${i+1}</td><td style="text-align:left;font-weight:bold">${st.name}</td>`;
+        (subData.days || []).forEach(d => {
+          let a = (st.m && st.m[d]) ? st.m[d] : {};
+          ['hw', 'cw', 'dis'].forEach(k => {
+            let v = a[k] || 0;
+            fullHtml += `<td class="${v==1?'green':v==-1?'red':''}">${v==1?'✓':v==-1?'✕':'—'}</td>`;
+          });
+        });
+        fullHtml += `<td style="font-weight:bold;background:#f1f5f9;">${sc}</td></tr>`;
       });
-    });
-    h += `<td><b>${score(s)}</b></td></tr>`;
+      fullHtml += `</table>`;
+    }
   });
-  document.getElementById('tbl').innerHTML = h;
+
+  if (!foundAny) {
+    container.innerHTML = '<div style="padding:20px;text-align:center;">यो नाम भएको विद्यार्थी भेटिएन।</div>';
+  } else {
+    container.innerHTML = fullHtml;
+  }
 }
 
-function save() { localStorage.setItem(KEY, JSON.stringify(D)); }
-
-function publishData() {
-  let payload = {
-    className: document.getElementById('className').value,
-    subject: document.getElementById('subject').value,
-    data: D
-  };
-
-  fetch(API_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(payload)
-  })
-  .then(() => {
-    alert("सफलतापूर्वक Publish भयो! अब Parents Portal मा हेर्नुहोस्।");
-  })
-  .catch(e => alert("समस्या आयो: " + e));
-}
-
-function resetAll() {
-  if (confirm('सबै Data हटाउने?')) { localStorage.removeItem(KEY); location.reload(); }
-}
+loadData();
 </script>
 </body>
 </html>
