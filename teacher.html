@@ -4,9 +4,9 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Teacher Dashboard</title>
   
-  <!-- नेपाली Datepicker को सही र काम गर्ने CDN Links -->
-  <link href="https://nepalidatepicker.sastogyan.com/nepali.datepicker.v4.0.1.min.css" rel="stylesheet" type="text/css"/>
-  <script src="https://nepalidatepicker.sastogyan.com/nepali.datepicker.v4.0.1.min.js" type="text/javascript"></script>
+  <!-- CDN नचाहिने - Unpkg बाट विश्वव्यापी विश्वसनीय Nepali Datepicker -->
+  <link rel="stylesheet" href="https://unpkg.com/nepali-date-picker@2.0.1/dist/nepaliDatePicker.min.css">
+  <script src="https://unpkg.com/nepali-date-picker@2.0.1/dist/nepaliDatePicker.min.js"></script>
 
   <style>
     *{box-sizing:border-box}
@@ -62,8 +62,7 @@
     </div>
     <div>
       <label>मिति छान्नुहोस् (वि.सं.):</label>
-      <!-- nepali-datepicker class थपिएको छ -->
-      <input id="date" type="text" class="nepali-datepicker" placeholder="नेपाली मिति छान्नुहोस्">
+      <input id="date" type="text" placeholder="नेपाली मिति छान्नुहोस्" style="background:#fff; cursor:pointer;" readonly>
     </div>
     <div style="align-self:end">
       <button class="btn-add" onclick="addDay()">+ मिति थप्नुहोस्</button>
@@ -382,28 +381,16 @@ function resetCurrentSubject() {
   }
 }
 
-// पात्रो सुरु गराउने सुरक्षित तरिका
-window.onload = function() {
-  let mainInput = document.getElementById('date');
-
-  // १. पात्रो थप्ने
-  if (mainInput && typeof mainInput.nepaliDatePicker === 'function') {
-    mainInput.nepaliDatePicker({
-      ndpYear: true,
-      ndpMonth: true,
-      readOnlyInput: true
+// Window load हुँदा nepaliDatePicker Initialization
+window.addEventListener('DOMContentLoaded', function() {
+  var dateInput = document.getElementById('date');
+  if (dateInput) {
+    dateInput.nepaliDatePicker({
+      dateFormat: '%y-%m-%d',
+      closeOnDateSelect: true
     });
   }
-
-  // २. आजको नेपाली मिति स्वतः राख्ने
-  if (typeof NepaliFunctions !== "undefined") {
-    let bs = NepaliFunctions.GetCurrentBsDate();
-    let y = bs.year;
-    let m = String(bs.month).padStart(2, '0');
-    let d = String(bs.day).padStart(2, '0');
-    mainInput.value = `${y}-${m}-${d}`;
-  }
-};
+});
 
 onClassChange();
 </script>
