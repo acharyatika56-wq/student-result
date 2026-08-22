@@ -16,7 +16,6 @@
     .btn-pub{background:#159447;font-size:15px;padding:10px}
     .danger{background:#c62828}
     
-    /* नामको छेउमा रहने ससाना बटनको CSS */
     .action-btn-group{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
     .btn-icon{padding:2px 6px;font-size:11px;border-radius:4px;cursor:pointer;border:none;color:white;line-height:1.2}
     .btn-edit-icon{background:#f59e0b}
@@ -29,7 +28,6 @@
     .green{background:#effaf3;color:green}
     .red{background:#fff1f1;color:red}
 
-    /* Modal Style */
     .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000}
     .modal-box{background:white;padding:20px;border-radius:8px;width:300px;box-shadow:0 4px 15px #0003}
   </style>
@@ -101,7 +99,7 @@
   <table id="tbl"></table>
 </div>
 
-<!-- ४. Edit Popup (Modal) -->
+<!-- ४. Edit Modal -->
 <div id="editModal" class="modal-overlay">
   <div class="modal-box">
     <h3 style="margin-top:0">विद्यार्थी सच्याउनुहोस्</h3>
@@ -316,6 +314,7 @@ function render() {
   document.getElementById('tbl').innerHTML = h;
 }
 
+// नयाँ सुरक्षित Publish फन्क्सन (CORS Block नहुने)
 function publishData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
@@ -335,14 +334,30 @@ function publishData() {
     }
   };
 
-  fetch(API_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(payload)
-  })
-  .then(() => alert(`Class ${cls} - ${sub} को डाटा सफलतापूर्वक Publish भयो!`))
-  .catch(e => alert("समस्या आयो: " + e));
+  let iframe = document.createElement('iframe');
+  iframe.name = 'hidden_iframe';
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  let form = document.createElement('form');
+  form.method = 'POST';
+  form.action = API_URL;
+  form.target = 'hidden_iframe';
+
+  let input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'postData';
+  input.value = JSON.stringify(payload);
+  form.appendChild(input);
+
+  document.body.appendChild(form);
+  form.submit();
+
+  setTimeout(() => {
+    document.body.removeChild(form);
+    document.body.removeChild(iframe);
+    alert(`Class ${cls} - ${sub} को डाटा सफलतापूर्वक Publish भयो!`);
+  }, 1000);
 }
 
 function resetCurrentSubject() {
