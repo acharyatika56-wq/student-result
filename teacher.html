@@ -39,7 +39,7 @@
 
 <!-- १. विद्यार्थी तथा मिति व्यवस्थापन -->
 <div class="add-box">
-  <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ विद्यार्थी र मिति व्यवस्थापन</h3>
+  <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ विद्यार्थी र नेपाली मिति व्यवस्थापन</h3>
   <div class="grid">
     <div>
       <label>विद्यार्थीको नाम:</label>
@@ -56,14 +56,18 @@
       <button class="btn-add" onclick="addStudent()">+ विद्यार्थी थप्नुहोस्</button>
     </div>
     
-    <!-- Standard HTML Calendar (जुनसुकै ब्राउजरमा खुल्छ) -->
+    <!-- ड्रपडाउन नेपाली मिति चयन (No External Calendar Required) -->
     <div>
-      <label>मिति छान्नुहोस् (क्यालेन्डर):</label>
-      <input id="date" type="date">
+      <label>नेपाली मिति छान्नुहोस् (वि.सं.):</label>
+      <div style="display:flex; gap:4px;">
+        <select id="npYear"></select>
+        <select id="npMonth"></select>
+        <select id="npDay"></select>
+      </div>
     </div>
 
     <div style="align-self:end">
-      <button class="btn-add" onclick="addDay()">+ मिति थप्नुहोस् (नेपालीमा सेभ हुनेछ)</button>
+      <button class="btn-add" onclick="addDay()">+ मिति थप्नुहोस्</button>
     </div>
   </div>
 </div>
@@ -140,31 +144,42 @@ const defaultClass9Names = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim C
 let currentRoster = []; 
 let D = { m: {}, days: [] };
 
-// AD मितिलाई BS (नेपाली) मा रूपान्तरण गर्ने Lightweight Converter
-function convertADtoBS(adDateStr) {
-  if (!adDateStr) return "";
-  let parts = adDateStr.split("-");
-  let year = parseInt(parts[0]);
-  let month = parseInt(parts[1]);
-  let day = parseInt(parts[2]);
+// नेपाली मिति Dropdown भरिने फसन
+function setupNepaliDateSelectors() {
+  const yearSelect = document.getElementById('npYear');
+  const monthSelect = document.getElementById('npMonth');
+  const daySelect = document.getElementById('npDay');
 
-  // Gregorian to BS Estimation Logic
-  let bsYear = year + 56;
-  let bsMonth = month + 8;
-  let bsDay = day + 15;
+  yearSelect.innerHTML = '';
+  monthSelect.innerHTML = '';
+  daySelect.innerHTML = '';
 
-  if (bsDay > 30) {
-    bsDay -= 30;
-    bsMonth += 1;
+  for (let y = 2080; y <= 2085; y++) {
+    let opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    yearSelect.appendChild(opt);
   }
-  if (bsMonth > 12) {
-    bsMonth -= 12;
-    bsYear += 1;
-  }
+  yearSelect.value = 2083; // हालको नेपाली साल
 
-  let mStr = String(bsMonth).padStart(2, '0');
-  let dStr = String(bsDay).padStart(2, '0');
-  return `${bsYear}-${mStr}-${dStr}`;
+  const months = ['०१ (वैशाख)', '०२ (जेठ)', '०३ (असार)', '०४ (श्रावण)', '०५ (भाद्र)', '०६ (आश्विन)', '०७ (कार्तिक)', '०८ (मंसिर)', '०९ (पौष)', '१० (माघ)', '११ (फागुन)', '१२ (चैत)'];
+  months.forEach((m, idx) => {
+    let opt = document.createElement('option');
+    let val = String(idx + 1).padStart(2, '0');
+    opt.value = val;
+    opt.textContent = m;
+    monthSelect.appendChild(opt);
+  });
+  monthSelect.value = '05'; // भदौ महिना
+
+  for (let d = 1; d <= 32; d++) {
+    let opt = document.createElement('option');
+    let val = String(d).padStart(2, '0');
+    opt.value = val;
+    opt.textContent = d;
+    daySelect.appendChild(opt);
+  }
+  daySelect.value = '06'; // गते
 }
 
 function getRosterKey(cls) { return `class_roster_C${cls}`; }
@@ -282,10 +297,11 @@ function deleteStudent(stId) {
 }
 
 function addDay() {
-  let rawDate = document.getElementById('date').value;
-  if (!rawDate) return alert("कृपया पहिले क्यालेन्डरबाट मिति छान्नुहोस्!");
+  let y = document.getElementById('npYear').value;
+  let m = document.getElementById('npMonth').value;
+  let d = document.getElementById('npDay').value;
 
-  let bsDate = convertADtoBS(rawDate); // मिति नेपाली B.S. मा परिणत हुन्छ
+  let bsDate = `${y}-${m}-${d}`;
 
   if (bsDate && !D.days.includes(bsDate)) { 
     D.days.push(bsDate); 
@@ -410,10 +426,8 @@ function resetCurrentSubject() {
   }
 }
 
-// आजको मिति स्वतः सेलेक्ट गर्ने
 window.onload = function() {
-  let today = new Date().toISOString().split('T')[0];
-  document.getElementById('date').value = today;
+  setupNepaliDateSelectors();
   onClassChange();
 };
 </script>
