@@ -9,7 +9,6 @@
     .card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px #0001}
     .add-box{background:#e0f2fe;border:2px solid #0284c7;padding:15px;border-radius:10px;margin-bottom:15px}
     
-    /* अंक भार जानकारी बाकसको स्टाइल */
     .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:10px 15px;margin-bottom:15px;display:flex;align-items:center;gap:15px;flex-wrap:wrap}
     .rule-item{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:bold}
     .rule-badge{display:inline-block;padding:2px 8px;border-radius:4px;color:white;font-weight:bold}
@@ -25,6 +24,11 @@
     .btn-pub{background:#159447;font-size:15px;padding:10px}
     .danger{background:#c62828}
     
+    /* द्रुत कार्य (Quick Actions) बटनहरूको स्टाइल */
+    .quick-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+    .btn-quick-green{background:#16a34a;font-size:12px;padding:6px 10px;width:auto}
+    .btn-quick-reset{background:#64748b;font-size:12px;padding:6px 10px;width:auto}
+
     .action-btn-group{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
     .btn-icon{padding:2px 6px;font-size:11px;border-radius:4px;cursor:pointer;border:none;color:white;line-height:1.2}
     .btn-edit-icon{background:#f59e0b}
@@ -48,21 +52,12 @@
 
 <h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
 
-<!-- अंक मूल्यांकनको जानकारी (Top Box) -->
+<!-- अंक मूल्याङ्कन नियम -->
 <div class="rule-info-box">
   <span style="font-weight:bold;color:#1e293b;">📌 अंक मूल्याङ्कन नियम:</span>
-  <div class="rule-item">
-    <span class="rule-badge bg-green">✓</span>
-    <span>हरियो टिक = +५ अंक</span>
-  </div>
-  <div class="rule-item">
-    <span class="rule-badge bg-red">✕</span>
-    <span>रातो क्रस = -२.५ अंक</span>
-  </div>
-  <div class="rule-item">
-    <span class="rule-badge bg-gray">—</span>
-    <span>खाली / बाँकी = ० अंक</span>
-  </div>
+  <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>हरियो टिक = +५ अंक</span></div>
+  <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>रातो क्रस = -२.५ अंक</span></div>
+  <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>खाली / बाँकी = ० अंक</span></div>
 </div>
 
 <!-- १. विद्यार्थी तथा मिति व्यवस्थापन -->
@@ -84,7 +79,6 @@
       <button class="btn-add" onclick="addStudent()">+ विद्यार्थी थप्नुहोस्</button>
     </div>
     
-    <!-- नेपाली मिति छान्ने विकल्प -->
     <div>
       <label>नेपाली मिति (साल - महिना - गते):</label>
       <div style="display:flex; gap:4px;">
@@ -344,6 +338,19 @@ function clickCell(stId, d, k) {
   render();
 }
 
+// 🟢 नयाँ फिचर: कुनै विशेष दिनको सबै विद्यार्थीलाई एकैचोटि हरियो टिक वा खाली गर्ने
+function setAllForDay(d, val) {
+  currentRoster.forEach(s => {
+    if (!D.m[s.id]) D.m[s.id] = {};
+    if (!D.m[s.id][d]) D.m[s.id][d] = {};
+    ['hw', 'cw', 'dis'].forEach(k => {
+      D.m[s.id][d][k] = val; // val = 1 (Green Tick) वा 0 (Reset)
+    });
+  });
+  saveSubjectData();
+  render();
+}
+
 function calculateDayScore(stId, uptoDayIndex) {
   let z = 0;
   let studentMarks = D.m[stId] || {};
@@ -364,7 +371,13 @@ function render() {
 
   let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
   D.days.forEach(d => {
-    h += `<th colspan="4" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">${d}</th>`;
+    h += `<th colspan="4" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">
+            ${d}
+            <div class="quick-actions">
+              <button class="btn-quick-green" onclick="setAllForDay('${d}', 1)" title="सबैलाई हरियो टिक दिनुहोस्">সবै ✓</button>
+              <button class="btn-quick-reset" onclick="setAllForDay('${d}', 0)" title="खाली गर्नुहोस्">Reset</button>
+            </div>
+          </th>`;
   });
   h += '</tr><tr>';
   
@@ -385,6 +398,7 @@ function render() {
       </td>
       <td>${s.sec}</td>`;
     
+    D.days.days = D.days || [];
     D.days.forEach((d, dayIndex) => {
       let a = (D.m[s.id] && D.m[s.id][d]) ? D.m[s.id][d] : {};
       ['hw', 'cw', 'dis'].forEach(k => {
