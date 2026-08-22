@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Teacher Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}.card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px #0001}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}input,select,button{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px}button{background:#1769aa;color:white;font-weight:bold;cursor:pointer}.btn-pub{background:#159447}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:6px;text-align:center}th{background:#173f78;color:white}.cell{font-size:20px;cursor:pointer;min-width:35px}.green{background:#effaf3;color:green}.red{background:#fff1f1;color:red}
+</style></head>
+<body>
+<h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
+<div class="card">
+  <div class="controls">
+    <div><label>कक्षा</label><input id="className" value="९"></div>
+    <div><label>विषय</label><input id="subject" value="गणित"></div>
+    <div><label>मिति</label><input id="date" type="date"></div>
+  </div>
+  <div style="margin-top:10px; display:flex; gap:8px;">
+    <button onclick="addDay()">+ मिति थप्नुहोस्</button>
+    <button class="btn-pub" onclick="publishData()">🌐 अनलाइन Publish गर्नुहोस् (Parents को लागि)</button>
+  </div>
+</div>
+
+<div class="card" style="overflow:auto">
+  <table id="tbl"></table>
+</div>
+
+<script>
+https://script.google.com/macros/s/AKfycbzwEJBOpiG5-4GpXcfJGqM8l4O4YB0WyJY5DQrSrnFFlOrKOc_EBuW1E-S9Ea8g-aew/exec
+const API_URL = "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE";
+
+const KEY='dailyTeacherV1';
+let D=JSON.parse(localStorage.getItem(KEY)||'null')||{
+  students:[{name:'Aakriti Sunar',sec:'Darwin',m:{}},{name:'Arju KC',sec:'Darwin',m:{}},{name:'Grishma Acharya',sec:'Einstein',m:{}}],
+  days:[]
+};
+
+document.getElementById('date').value=new Date().toISOString().slice(0,10);
+render();
+
+function addDay(){
+  let d=document.getElementById('date').value;
+  if(d && !D.days.includes(d)){ D.days.push(d); D.days.sort(); save(); render(); }
+}
+
+function clickCell(i,d,k){
+  let a=D.students[i].m[d]||{};
+  let v=a[k]||0;
+  a[k]= v===0 ? 1 : v===1 ? -1 : 0;
+  D.students[i].m[d]=a;
+  save(); render();
+}
+
+function score(s){
+  let z=0; Object.values(s.m).forEach(a=>Object.values(a).forEach(v=>z+=v==1?5:v==-1?-2.5:0)); return z;
+}
+
+function render(){
+  let h='<tr><th>विद्यार्थी</th><th>सेक्सन</th>';
+  D.days.forEach(d=>h+=`<th colspan="3">${d}<br><small>HW|CW|DIS</small></th>`);
+  h+='<th>अंक</th></tr>';
+  D.students.forEach((s,i)=>{
+    h+=`<tr><td>${s.name}</td><td>${s.sec}</td>`;
+    D.days.forEach(d=>{
+      let a=s.m[d]||{};
+      ['hw','cw','dis'].forEach(k=>{
+        let v=a[k]||0;
+        h+=`<td class="cell ${v==1?'green':v==-1?'red':''}" onclick="clickCell(${i},'${d}','${k}')">${v==1?'✓':v==-1?'✕':'—'}</td>`;
+      });
+    });
+    h+=`<td><b>${score(s)}</b></td></tr>`;
+  });
+  document.getElementById('tbl').innerHTML=h;
+}
+
+function save(){ localStorage.setItem(KEY,JSON.stringify(D)); }
+
+function publishData(){
+  if(API_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE"){
+    alert("कृपया पहिले Google Apps Script को URL राख्नुहोस्!");
+    return;
+  }
+  let payload = {
+    className: document.getElementById('className').value,
+    subject: document.getElementById('subject').value,
+    data: D
+  };
+  fetch(API_URL, {method:'POST', body:JSON.stringify(payload)})
+  .then(r=>alert("सफलतापूर्वक Publish भयो! अब अभिभावकले अनलाइन नतिजा हेर्न सक्नुहुन्छ।"))
+  .catch(e=>alert("Publish गर्दा समस्या आयो!"));
+}
+</script>
+</body>
+</html>
