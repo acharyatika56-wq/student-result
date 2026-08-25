@@ -2,26 +2,29 @@
 <html lang="ne">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Parents View - Student Homework & Discipline Tracker</title>
+  <title>Parents View - Student Progress Tracker</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
     .card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px #0001}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
     label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
-    input,select{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+    select{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;background:#fff}
     
-    .btn-pdf{background:#ea580c;color:white;font-weight:bold;cursor:pointer;border:none;padding:9px;border-radius:6px;font-size:14px;width:100%}
+    .btn-pdf{background:#ea580c;color:white;font-weight:bold;cursor:pointer;border:none;padding:10px;border-radius:6px;font-size:14px;width:100%}
     
-    table{border-collapse:collapse;width:100%;min-width:650px}
-    th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
-    th{background:#173f78;color:white}
-    .sub-th{background:#1e4c8a;font-size:11px;padding:4px;width:35px}
-    .cell{font-size:18px;min-width:35px;user-select:none}
+    .report-box{background:#fff;border-radius:10px;padding:15px;border:1px solid #cbd5e1;margin-top:10px}
+    .student-header{background:#173f78;color:white;padding:12px;border-radius:8px;margin-bottom:15px;font-size:16px;font-weight:bold}
+    
+    table{border-collapse:collapse;width:100%;min-width:600px;margin-top:10px}
+    th,td{border:1px solid #cbd5e1;padding:8px;text-align:center}
+    th{background:#1e4c8a;color:white}
+    .sub-th{background:#2a5c9a;font-size:12px;padding:6px;width:50px}
+    .cell{font-size:18px;min-width:40px;user-select:none}
     .green{background:#effaf3;color:green}
     .red{background:#fff1f1;color:red}
 
-    #status{text-align:center;padding:20px;font-weight:bold;color:#666}
+    #status{text-align:center;padding:30px;font-weight:bold;color:#666}
 
     @media print {
       body { background: white; padding: 0; }
@@ -32,7 +35,7 @@
 </head>
 <body>
 
-<h2>👨‍👩‍👧 विद्यार्थी प्रगति विवरण (Parents Panel)</h2>
+<h2>👨‍👩‍👧 अभिभावक प्यानल (Parents Portal)</h2>
 
 <div class="card grid">
   <div>
@@ -48,25 +51,19 @@
     <select id="subject" onchange="fetchData()"></select>
   </div>
   <div>
-    <label>सेक्सन (Filter):</label>
-    <select id="sectionFilter" onchange="render()">
-      <option value="ALL">सबै (ALL)</option>
-      <option value="Darwin">Darwin</option>
-      <option value="Newton">Newton</option>
+    <label>तपाईंको बच्चाको नाम छान्नुहोस्:</label>
+    <select id="studentSelect" onchange="renderStudentReport()">
+      <option value="">-- पहिले कक्षा र विषय छान्नुहोस् --</option>
     </select>
   </div>
-  <div>
-    <label>विद्यार्थीको नाम खोज्नुहोस्:</label>
-    <input id="searchName" placeholder="नाम टाइप गर्नुहोस्..." oninput="render()">
-  </div>
   <div style="align-self:end">
-    <button class="btn-pdf" onclick="window.print()">📥 PDF डाउनलोड</button>
+    <button class="btn-pdf" onclick="window.print()">📥 यो रिपोर्ट PDF डाउनलोड</button>
   </div>
 </div>
 
-<div class="card" style="overflow:auto">
-  <div id="status">डाटा लोड हुँदैछ...</div>
-  <table id="tbl" style="display:none;"></table>
+<div class="card">
+  <div id="status">डाटा लोड हुँदैछ... कृपया प्रतीक्षा गर्नुहोस्।</div>
+  <div id="reportContainer" style="display:none;"></div>
 </div>
 
 <script>
@@ -102,7 +99,7 @@ function sortDaysArray(days) {
     let partsB = b.split(' ');
     let mNumA = monthOrder[partsA[0]] || 0;
     let mNumB = monthOrder[partsB[0]] || 0;
-    if (mNumA !== mNumB) return mNumB - mNumA; // उल्टो क्रम (Descending)
+    if (mNumA !== mNumB) return mNumB - mNumA;
 
     let getDayVal = (dayStr) => {
       let numDigits = (dayStr.match(/[०-९]/g) || []).join('');
@@ -113,24 +110,25 @@ function sortDaysArray(days) {
       }
       return parseInt(engNum) || 0;
     };
-    return getDayVal(partsB[1]) - getDayVal(partsA[1]); // उल्टो क्रम (Descending)
+    return getDayVal(partsB[1]) - getDayVal(partsA[1]);
   });
 }
 
 function fetchData() {
+  updateSubjectsList();
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
   
   document.getElementById('status').style.display = "block";
   document.getElementById('status').textContent = "डाटा लोड हुँदैछ...";
-  document.getElementById('tbl').style.display = "none";
+  document.getElementById('reportContainer').style.display = "none";
 
   fetch(`${API_URL}?className=${cls}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
       currentData = data || { students: [], days: [] };
       currentData.days = sortDaysArray(currentData.days);
-      render();
+      populateStudentDropdown();
     })
     .catch(err => {
       console.error(err);
@@ -138,69 +136,112 @@ function fetchData() {
     });
 }
 
-function score(student) {
+function populateStudentDropdown() {
+  let select = document.getElementById('studentSelect');
+  select.innerHTML = '<option value="">-- आफ्नो बच्चाको नाम छान्नुहोस् --</option>';
+
+  if (!currentData.students || currentData.students.length === 0) {
+    document.getElementById('status').textContent = "यस विषयको लागि कुनै विद्यार्थी डाटा उपलब्ध छैन।";
+    return;
+  }
+
+  // विद्यार्थीको नाम अनुसार अल्फाबेटिकल क्रममा मिलाउने
+  let sortedStudents = [...currentData.students].sort((a, b) => a.name.localeCompare(b.name));
+
+  sortedStudents.forEach((s, index) => {
+    let opt = document.createElement('option');
+    opt.value = s.name; // नामलाई पहिचानको रूपमा प्रयोग गरिएको छ
+    opt.textContent = `${s.name} (सेक्सन: ${s.sec || 'N/A'})`;
+    select.appendChild(opt);
+  });
+
+  document.getElementById('status').style.display = "none";
+}
+
+function calculateTotalScore(studentMarks, days) {
   let z = 0;
-  let studentMarks = student.m || {};
-  Object.values(studentMarks).forEach(a => {
+  days.forEach(d => {
+    let a = (studentMarks && studentMarks[d]) ? studentMarks[d] : {};
     Object.values(a).forEach(v => z += v == 1 ? 5 : v == -1 ? -2.5 : 0);
   });
   return z;
 }
 
-function render() {
-  let secFilter = document.getElementById('sectionFilter').value;
-  let search = document.getElementById('searchName').value.toLowerCase().trim();
+function renderStudentReport() {
+  let selectedName = document.getElementById('studentSelect').value;
+  let container = document.getElementById('reportContainer');
 
-  let filtered = (currentData.students || []).filter(s => {
-    let matchesSec = secFilter === 'ALL' || s.sec === secFilter;
-    let matchesName = (s.name || '').toLowerCase().includes(search);
-    return matchesSec && matchesName;
-  });
-
-  if (!filtered || filtered.length === 0) {
+  if (!selectedName) {
+    container.style.display = "none";
     document.getElementById('status').style.display = "block";
-    document.getElementById('status').textContent = "कुनै विद्यार्थी भेटिएन वा डाटा उपलब्ध छैन।";
-    document.getElementById('tbl').style.display = "none";
+    document.getElementById('status').textContent = "कृपया ड्रपडाउनबाट आफ्नो बच्चाको नाम छान्नुहोस्।";
+    return;
+  }
+
+  let student = currentData.students.find(s => s.name === selectedName);
+  if (!student) {
+    container.innerHTML = "<p>विद्यार्थीको डाटा भेटिएन।</p>";
+    container.style.display = "block";
+    document.getElementById('status').style.display = "none";
     return;
   }
 
   document.getElementById('status').style.display = "none";
-  document.getElementById('tbl').style.display = "table";
+  container.style.display = "block";
 
-  let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
-  (currentData.days || []).forEach(d => {
-    h += `<th colspan="3" style="border-bottom:1px solid #ffffff44;padding:6px;">${d}</th>`;
-  });
-  h += '<th rowspan="2">अंक</th></tr>';
+  let totalScore = calculateTotalScore(student.m, currentData.days);
 
-  h += '<tr>';
-  (currentData.days || []).forEach(() => {
-    h += '<th class="sub-th">HW</th><th class="sub-th">CW</th><th class="sub-th">DIS</th>';
-  });
-  h += '</tr></thead><tbody>';
+  let html = `
+    <div class="student-header">
+      👤 विद्यार्थीको नाम: ${student.name} &nbsp;|&nbsp; सेक्सन: ${student.sec || 'N/A'} &nbsp;|&nbsp; जम्मा कूल अंक: <span style="background:#fff; color:#173f78; padding:2px 8px; border-radius:4px;">${totalScore}</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2">मिति (Date)</th>
+            <th colspan="3">मूल्याङ्कन (Evaluation)</th>
+            <th rowspan="2">दिनको कूल अंक</th>
+          </tr>
+<div>
+          <tr>
+            <th class="sub-th">गृहकार्य (HW)</th>
+            <th class="sub-th">क्लासकार्य (CW)</th>
+            <th class="sub-th">अनुशासन (DIS)</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
 
-  filtered.forEach((s, i) => {
-    h += `<tr>
-      <td>${i + 1}</td>
-      <td style="text-align:left;font-weight:bold;padding-left:8px">${s.name}</td>
-      <td>${s.sec || ''}</td>`;
-
-    (currentData.days || []).forEach(d => {
-      let a = (s.m && s.m[d]) ? s.m[d] : {};
+  if (!currentData.days || currentData.days.length === 0) {
+    html += `<tr><td colspan="5" style="padding:15px;color:#666;">अहिलेसम्म कुनै पनि मितिको डाटा प्रविष्ट गरिएको छैन।</td></tr>`;
+  } else {
+    currentData.days.forEach(d => {
+      let a = (student.m && student.m[d]) ? student.m[d] : {};
+      let dayScore = 0;
       ['hw', 'cw', 'dis'].forEach(k => {
         let v = a[k] || 0;
-        h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+        dayScore += (v == 1 ? 5 : v == -1 ? -2.5 : 0);
       });
+
+      html += `<tr>
+        <td style="font-weight:bold; background:#f8fafc;">${d}</td>`;
+      
+      ['hw', 'cw', 'dis'].forEach(k => {
+        let v = a[k] || 0;
+        html += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+      });
+
+      html += `<td style="font-weight:bold; color:#0369a1;">${dayScore}</td>
+      </tr>`;
     });
+  }
 
-    h += `<td><b>${score(s)}</b></td></tr>`;
-  });
-
-  h += '</tbody>';
-  document.getElementById('tbl').innerHTML = h;
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
 }
 
-updateSubjectsList();
+// पेज लोड हुँदा पहिलो विषयको डाटा तान्ने
 fetchData();
 </script>
 </body>
