@@ -11,6 +11,8 @@
     label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
     input,select{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
     
+    .btn-pdf{background:#ea580c;color:white;font-weight:bold;cursor:pointer;border:none;padding:9px;border-radius:6px;font-size:14px;width:100%}
+    
     table{border-collapse:collapse;width:100%;min-width:650px}
     th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
     th{background:#173f78;color:white}
@@ -20,13 +22,18 @@
     .red{background:#fff1f1;color:red}
 
     #status{text-align:center;padding:20px;font-weight:bold;color:#666}
+
+    @media print {
+      body { background: white; padding: 0; }
+      .card.grid { display: none !important; }
+      .card { box-shadow: none; padding: 0; margin: 0; }
+    }
   </style>
 </head>
 <body>
 
 <h2>👨‍👩‍👧 विद्यार्थी प्रगति विवरण (Parents Panel)</h2>
 
-<!-- १. फिल्टर र खोजी -->
 <div class="card grid">
   <div>
     <label>कक्षा (Class):</label>
@@ -52,9 +59,11 @@
     <label>विद्यार्थीको नाम खोज्नुहोस्:</label>
     <input id="searchName" placeholder="नाम टाइप गर्नुहोस्..." oninput="render()">
   </div>
+  <div style="align-self:end">
+    <button class="btn-pdf" onclick="window.print()">📥 PDF डाउनलोड</button>
+  </div>
 </div>
 
-<!-- २. मुख्य टेबल -->
 <div class="card" style="overflow:auto">
   <div id="status">डाटा लोड हुँदैछ...</div>
   <table id="tbl" style="display:none;"></table>
@@ -68,6 +77,9 @@ const SUBJECTS = {
   "9": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"],
   "10": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"]
 };
+
+const nepaliDigits = ['०','१','२','३','४','५','६','७','८','९'];
+const monthOrder = { "बैशाख": 1, "जेठ": 2, "असार": 3, "साउन": 4, "भदौ": 5, "असोज": 6, "कात्तिक": 7, "मंसिर": 8, "पुस": 9, "माघ": 10, "फागुन": 11, "चैत": 12 };
 
 let currentData = { students: [], days: [] };
 
@@ -83,6 +95,28 @@ function updateSubjectsList() {
   });
 }
 
+function sortDaysArray(days) {
+  if (!days) return [];
+  return days.sort((a, b) => {
+    let partsA = a.split(' ');
+    let partsB = b.split(' ');
+    let mNumA = monthOrder[partsA[0]] || 0;
+    let mNumB = monthOrder[partsB[0]] || 0;
+    if (mNumA !== mNumB) return mNumA - mNumB;
+
+    let getDayVal = (dayStr) => {
+      let numDigits = (dayStr.match(/[०-९]/g) || []).join('');
+      let engNum = '';
+      for(let char of numDigits) {
+        let idx = nepaliDigits.indexOf(char);
+        engNum += (idx !== -1 ? idx : '');
+      }
+      return parseInt(engNum) || 0;
+    };
+    return getDayVal(partsA[1]) - getDayVal(partsB[1]);
+  });
+}
+
 function fetchData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
@@ -95,6 +129,7 @@ function fetchData() {
     .then(res => res.json())
     .then(data => {
       currentData = data || { students: [], days: [] };
+      currentData.days = sortDaysArray(currentData.days);
       render();
     })
     .catch(err => {
@@ -132,21 +167,18 @@ function render() {
   document.getElementById('status').style.display = "none";
   document.getElementById('tbl').style.display = "table";
 
-  // १. पहिलो Row मा मितिहरू (वि.सं.)
   let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
   (currentData.days || []).forEach(d => {
     h += `<th colspan="3" style="border-bottom:1px solid #ffffff44;padding:6px;">${d}</th>`;
   });
   h += '<th rowspan="2">अंक</th></tr>';
 
-  // २. दोस्रो Row मा HW, CW, DIS
   h += '<tr>';
   (currentData.days || []).forEach(() => {
     h += '<th class="sub-th">HW</th><th class="sub-th">CW</th><th class="sub-th">DIS</th>';
   });
   h += '</tr></thead><tbody>';
 
-  // ३. डेटा Rows (टिक/क्रस र अंक)
   filtered.forEach((s, i) => {
     h += `<tr>
       <td>${i + 1}</td>
@@ -168,7 +200,6 @@ function render() {
   document.getElementById('tbl').innerHTML = h;
 }
 
-// Initial Load
 updateSubjectsList();
 fetchData();
 </script>
