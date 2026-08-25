@@ -2,40 +2,52 @@
 <html lang="ne">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Parents Portal - Student Progress</title>
+  <title>अभिभावक मूल्याङ्कन पोर्टल (Parents View)</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
     .card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px #0001}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
     label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
-    select{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px;background:#fff}
-    .btn-pdf{background:#ea580c;color:white;font-weight:bold;cursor:pointer;border:none;padding:10px;border-radius:6px;font-size:14px;width:100%}
-    .student-header{background:#173f78;color:white;padding:12px;border-radius:8px;margin-bottom:15px;font-size:16px;font-weight:bold}
-    table{border-collapse:collapse;width:100%;min-width:600px;margin-top:10px}
-    th,td{border:1px solid #cbd5e1;padding:8px;text-align:center}
-    th{background:#1e4c8a;color:white}
-    .sub-th{background:#2a5c9a;font-size:12px;padding:6px;width:50px}
-    .cell{font-size:18px;min-width:40px;user-select:none}
+    select,button{width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+    button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
+    
+    .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:10px 15px;margin-bottom:15px;display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+    .rule-item{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:bold}
+    .rule-badge{display:inline-block;padding:2px 6px;border-radius:4px;color:white;font-weight:bold}
+    .bg-green{background:#16a34a}
+    .bg-red{background:#dc2626}
+    .bg-gray{background:#64748b}
+
+    table{border-collapse:collapse;width:100%;min-width:650px}
+    th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
+    th{background:#173f78;color:white}
+    .sub-th{background:#1e4c8a;font-size:11px;padding:4px;width:38px}
+    .score-th{background:#0d5257;font-size:11px;padding:4px;width:45px;color:#fff}
+    .cell{font-size:16px;min-width:35px}
     .green{background:#effaf3;color:green}
     .red{background:#fff1f1;color:red}
-    #status{text-align:center;padding:30px;font-weight:bold;color:#666}
-
-    @media print {
-      body { background: white; padding: 0; }
-      .card.grid { display: none !important; }
-      .card { box-shadow: none; padding: 0; margin: 0; }
-    }
+    .score-cell{background:#e2f8ff;font-weight:bold;color:#0369a1;font-size:14px}
+    #loadingStatus{text-align:center;padding:12px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:15px;}
   </style>
 </head>
 <body>
 
-<h2>👨‍👩‍👧 अभिभावक प्यानल (Parents Portal)</h2>
+<h2>📊 विद्यार्थी प्रगति प्रतिवेदन (अभिभावक पोर्टल)</h2>
+
+<div id="loadingStatus">डेटा लोड हुँदैछ...</div>
+
+<div class="rule-info-box">
+  <span style="font-weight:bold;color:#1e293b;">📌 संकेतहरू:</span>
+  <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>गृहकार्य/कक्षाकार्य पूरा (+५ अंक)</span></div>
+  <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>अवरोध/असुझाव (-२.५ अंक)</span></div>
+  <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>खाली (० अंक)</span></div>
+</div>
 
 <div class="card grid">
   <div>
     <label>कक्षा (Class):</label>
-    <select id="className" onchange="fetchData()">
+    <select id="className" onchange="onClassChange()">
       <option value="8">Class 8</option>
       <option value="9" selected>Class 9</option>
       <option value="10">Class 10</option>
@@ -43,25 +55,27 @@
   </div>
   <div>
     <label>विषय (Subject):</label>
-    <select id="subject" onchange="fetchData()"></select>
+    <select id="subject" onchange="fetchServerData()"></select>
   </div>
   <div>
-    <label>तपाईंको बच्चाको नाम छान्नुहोस्:</label>
-    <select id="studentSelect" onchange="renderStudentReport()">
-      <option value="">-- पहिले कक्षा र विषय छान्नुहोस् --</option>
+    <label>सेक्सन:</label>
+    <select id="sectionFilter" onchange="render()">
+      <option value="ALL">सबै (ALL)</option>
+      <option value="Darwin">Darwin</option>
+      <option value="Newton">Newton</option>
     </select>
   </div>
   <div style="align-self:end">
-    <button class="btn-pdf" onclick="window.print()">📥 यो रिपोर्ट PDF डाउनलोड</button>
+    <button onclick="fetchServerData()" style="background:#159447">🔄 रिफ्रेस गर्नुहोस्</button>
   </div>
 </div>
 
-<div class="card">
-  <div id="status">डाटा लोड हुँदैछ... कृपया प्रतीक्षा गर्नुहोस्।</div>
-  <div id="reportContainer" style="display:none;"></div>
+<div class="card" style="overflow:auto">
+  <table id="tbl"></table>
 </div>
 
 <script>
+// यहाँ आफ्नो Google Apps Script को सही Web App URL राख्नुहोला
 const API_URL = "https://script.google.com/macros/s/AKfycbzRceiAgW7MRrJtHTJ8u9a_VAw_IEow72UltTQGvR-kxScQZOElvRgpVdHkTX0C7dnY6g/exec";
 
 const SUBJECTS = {
@@ -70,10 +84,9 @@ const SUBJECTS = {
   "10": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"]
 };
 
-const nepaliDigits = ['०','१','२','३','४','५','६','७','८','९'];
-const monthOrder = { "बैशाख": 1, "जेठ": 2, "असार": 3, "साउन": 4, "भदौ": 5, "असोज": 6, "कात्तिक": 7, "मंसिर": 8, "पुस": 9, "माघ": 10, "फागुन": 11, "चैत": 12 };
-
-let currentData = { students: [], days: [] };
+let currentStudents = [];
+let currentDays = [];
+let currentMarks = {};
 
 function updateSubjectsList() {
   let cls = document.getElementById('className').value;
@@ -87,143 +100,106 @@ function updateSubjectsList() {
   });
 }
 
-function sortDaysArray(days) {
-  if (!days) return [];
-  return days.sort((a, b) => {
-    let partsA = a.split(' ');
-    let partsB = b.split(' ');
-    let mNumA = monthOrder[partsA[0]] || 0;
-    let mNumB = monthOrder[partsB[0]] || 0;
-    if (mNumA !== mNumB) return mNumB - mNumA;
-
-    let getDayVal = (dayStr) => {
-      let numDigits = (dayStr.match(/[०-९]/g) || []).join('');
-      let engNum = '';
-      for(let char of numDigits) {
-        let idx = nepaliDigits.indexOf(char);
-        engNum += (idx !== -1 ? idx : '');
-      }
-      return parseInt(engNum) || 0;
-    };
-    return getDayVal(partsB[1]) - getDayVal(partsA[1]);
-  });
+function onClassChange() {
+  updateSubjectsList();
+  fetchServerData();
 }
 
-function fetchData() {
-  updateSubjectsList();
+function fetchServerData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
   
-  document.getElementById('status').style.display = "block";
-  document.getElementById('status').textContent = "डाटा लोड हुँदैछ...";
-  document.getElementById('reportContainer').style.display = "none";
+  let statusBox = document.getElementById('loadingStatus');
+  statusBox.style.display = "block";
+  statusBox.textContent = `कक्षा ${cls} (${sub}) को डेटा ल्याउँदैछ...`;
 
   fetch(`${API_URL}?className=${cls}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
-      currentData = data || { students: [], days: [] };
-      currentData.days = sortDaysArray(currentData.days);
-      populateStudentDropdown();
+      statusBox.style.display = "none";
+      
+      if (data && data.students && data.students.length > 0) {
+        currentStudents = data.students.map((s, i) => ({
+          id: s.id || ("st_" + i),
+          name: s.name,
+          sec: s.sec || 'Darwin'
+        }));
+        currentDays = data.days || [];
+        currentMarks = {};
+        data.students.forEach((s, i) => {
+          let id = s.id || ("st_" + i);
+          currentMarks[id] = s.m || {};
+        });
+      } else {
+        currentStudents = [];
+        currentDays = [];
+        currentMarks = {};
+      }
+      render();
     })
     .catch(err => {
       console.error(err);
-      document.getElementById('status').textContent = "डाटा लोड गर्न सकिएन। कृपया पुनः प्रयास गर्नुहोस्।";
+      statusBox.textContent = "डेटा लोड गर्न सकिएन। सर्فر वा इन्टरनेट कनेक्सन जाँच गर्नुहोस्।";
+      setTimeout(() => { statusBox.style.display = "none"; }, 4000);
+      render();
     });
 }
 
-function populateStudentDropdown() {
-  let select = document.getElementById('studentSelect');
-  select.innerHTML = '<option value="">-- आफ्नो बच्चाको नाम छान्नुहोस् --</option>';
-
-  if (!currentData.students || currentData.students.length === 0) {
-    document.getElementById('status').textContent = "यस विषयको लागि कुनै विद्यार्थी डाटा उपलब्ध छैन।";
-    return;
+function calculateDayScore(stId, uptoDayIndex) {
+  let z = 0;
+  let studentMarks = currentMarks[stId] || {};
+  for (let i = 0; i <= uptoDayIndex; i++) {
+    let day = currentDays[i];
+    let a = studentMarks[day] || {};
+    Object.values(a).forEach(v => { z += (v === 1 ? 5 : v === -1 ? -2.5 : 0); });
   }
-
-  let sortedStudents = [...currentData.students].sort((a, b) => a.name.localeCompare(b.name));
-  sortedStudents.forEach(s => {
-    let opt = document.createElement('option');
-    opt.value = s.name;
-    opt.textContent = `${s.name} (सेक्सन: ${s.sec || 'N/A'})`;
-    select.appendChild(opt);
-  });
-  document.getElementById('status').style.display = "none";
+  return z;
 }
 
-function renderStudentReport() {
-  let selectedName = document.getElementById('studentSelect').value;
-  let container = document.getElementById('reportContainer');
+function render() {
+  let filterSec = document.getElementById('sectionFilter').value;
+  let filteredStudents = currentStudents.filter(s => filterSec === 'ALL' || s.sec === filterSec);
 
-  if (!selectedName) {
-    container.style.display = "none";
-    document.getElementById('status').style.display = "block";
-    document.getElementById('status').textContent = "कृपया ड्रपडाउनबाट आफ्नो बच्चाको नाम छान्नुहोस्।";
-    return;
-  }
-
-  let student = currentData.students.find(s => s.name === selectedName);
-  if (!student) {
-    container.innerHTML = "<p>विद्यार्थीको डाटा भेटिएन।</p>";
-    container.style.display = "block";
-    document.getElementById('status').style.display = "none";
-    return;
-  }
-
-  document.getElementById('status').style.display = "none";
-  container.style.display = "block";
-
-  let totalScore = 0;
-  currentData.days.forEach(d => {
-    let a = (student.m && student.m[d]) ? student.m[d] : {};
-    Object.values(a).forEach(v => totalScore += (v == 1 ? 5 : v == -1 ? -2.5 : 0));
+  let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
+  currentDays.forEach(d => {
+    h += `<th colspan="4" style="padding:6px;font-size:13px;">${d}</th>`;
   });
+  h += '</tr><tr>';
+  
+  currentDays.forEach(d => {
+    h += `<th class="sub-th">HW</th><th class="sub-th">CW</th><th class="sub-th">DIS</th><th class="score-th">अंक</th>`;
+  });
+  h += '</tr></thead><tbody>';
 
-  let html = `
-    <div class="student-header">
-      👤 विद्यार्थीको नाम: ${student.name} &nbsp;|&nbsp; सेक्सन: ${student.sec || 'N/A'} &nbsp;|&nbsp; जम्मा कूल अंक: <span style="background:#fff; color:#173f78; padding:2px 8px; border-radius:4px;">${totalScore}</span>
-    </div>
-    <div style="overflow-x:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th rowspan="2">मिति (Date)</th>
-            <th colspan="3">मूल्याङ्कन (Evaluation)</th>
-            <th rowspan="2">दिनको कूल अंक</th>
-          </tr>
-          <tr>
-            <th class="sub-th">गृहकार्य (HW)</th>
-            <th class="sub-th">क्लासकार्य (CW)</th>
-            <th class="sub-th">अनुशासन (DIS)</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  if (!currentData.days || currentData.days.length === 0) {
-    html += `<tr><td colspan="5" style="padding:15px;color:#666;">अहिलेसम्म कुनै पनि मितिको डाटा प्रविष्ट गरिएको छैन।</td></tr>`;
+  if (filteredStudents.length === 0) {
+    h += `<tr><td colspan="10" style="padding:20px; color:#666;">यो विषयको लागि हाल कुनै पनि रेकर्ड फेला परेन। (शिक्षकले यो विषयमा अझै डेटा पब्लिश गरेका छैनन्।)</td></tr>`;
   } else {
-    currentData.days.forEach(d => {
-      let a = (student.m && student.m[d]) ? student.m[d] : {};
-      let dayScore = 0;
-      ['hw', 'cw', 'dis'].forEach(k => {
-        let v = a[k] || 0;
-        dayScore += (v == 1 ? 5 : v == -1 ? -2.5 : 0);
+    filteredStudents.forEach((s, i) => {
+      h += `<tr>
+        <td>${i + 1}</td>
+        <td style="text-align:left;font-weight:bold;padding-left:8px">${s.name}</td>
+        <td>${s.sec}</td>`;
+      
+      currentDays.forEach((d, dayIndex) => {
+        let a = (currentMarks[s.id] && currentMarks[s.id][d]) ? currentMarks[s.id][d] : {};
+        ['hw', 'cw', 'dis'].forEach(k => {
+          let v = a[k] || 0;
+          h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+        });
+        h += `<td class="score-cell">${calculateDayScore(s.id, dayIndex)}</td>`;
       });
-
-      html += `<tr><td style="font-weight:bold; background:#f8fafc;">${d}</td>`;
-      ['hw', 'cw', 'dis'].forEach(k => {
-        let v = a[k] || 0;
-        html += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
-      });
-      html += `<td style="font-weight:bold; color:#0369a1;">${dayScore}</td></tr>`;
+      h += `</tr>`;
     });
   }
 
-  html += `</tbody></table></div>`;
-  container.innerHTML = html;
+  h += '</tbody>';
+  document.getElementById('tbl').innerHTML = h;
 }
 
-fetchData();
+window.onload = function() {
+  updateSubjectsList();
+  fetchServerData();
+};
 </script>
 </body>
 </html>
