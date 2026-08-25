@@ -264,7 +264,7 @@ function saveSubjectData() {
   localStorage.setItem(getSubjectKey(), JSON.stringify(D));
 }
 
-// महिना र गतेको आधारमा मितिहरूलाई सधैं सहि क्रमानुसार (Chronological Order) मिलाउने 
+// नयाँ मितिहरू सधैं अगाडि (Latest first) आउने गरी मिलाउने (Descending Order)
 function sortDays() {
   if (!D.days) return;
   D.days.sort((a, b) => {
@@ -272,7 +272,7 @@ function sortDays() {
     let partsB = b.split(' ');
     let mNumA = monthOrder[partsA[0]] || 0;
     let mNumB = monthOrder[partsB[0]] || 0;
-    if (mNumA !== mNumB) return mNumA - mNumB;
+    if (mNumA !== mNumB) return mNumB - mNumA; // उल्टो क्रम (Descending)
 
     let getDayVal = (dayStr) => {
       let numDigits = (dayStr.match(/[०-९]/g) || []).join('');
@@ -283,7 +283,7 @@ function sortDays() {
       }
       return parseInt(engNum) || 0;
     };
-    return getDayVal(partsA[1]) - getDayVal(partsB[1]);
+    return getDayVal(partsB[1]) - getDayVal(partsA[1]); // उल्टो क्रम (Descending)
   });
 }
 
@@ -380,11 +380,9 @@ function addDay() {
   }
 }
 
-// विशेष मिति (Day) मात्रै मेटाउने / Reset गर्ने फंक्सन
 function deleteDay(d) {
   if (confirm(`के तपाईं "${d}" को सम्पूर्ण डाटा हटाउन चाहनुहुन्छ?`)) {
     D.days = D.days.filter(item => item !== d);
-    // सबै विद्यार्थीहरूको यो मितिको रेकर्ड हटाउने
     Object.keys(D.m).forEach(stId => {
       if (D.m[stId][d]) {
         delete D.m[stId][d];
