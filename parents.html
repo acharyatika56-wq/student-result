@@ -102,7 +102,7 @@ function sortDaysArray(days) {
     let partsB = b.split(' ');
     let mNumA = monthOrder[partsA[0]] || 0;
     let mNumB = monthOrder[partsB[0]] || 0;
-    if (mNumA !== mNumB) return mNumA - mNumB;
+    if (mNumA !== mNumB) return mNumB - mNumA; // उल्टो क्रम (Descending)
 
     let getDayVal = (dayStr) => {
       let numDigits = (dayStr.match(/[०-९]/g) || []).join('');
@@ -113,7 +113,7 @@ function sortDaysArray(days) {
       }
       return parseInt(engNum) || 0;
     };
-    return getDayVal(partsA[1]) - getDayVal(partsB[1]);
+    return getDayVal(partsB[1]) - getDayVal(partsA[1]); // उल्टो क्रम (Descending)
   });
 }
 
