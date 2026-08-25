@@ -22,9 +22,9 @@
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
     .btn-add{background:#0284c7;color:white;font-weight:bold}
     .btn-pub{background:#159447;font-size:15px;padding:10px}
+    .btn-pdf{background:#ea580c;font-size:15px;padding:10px}
     .danger{background:#c62828}
     
-    /* प्रत्येक कोलमको माथि रहने हरियो टिक बटनको स्टाइल */
     .btn-col-green {
       background: #16a34a;
       color: white;
@@ -38,6 +38,20 @@
       font-weight: bold;
     }
     .btn-col-green:hover { background: #15803d; }
+
+    .btn-del-day {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 1px 4px;
+      font-size: 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-top: 2px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
 
     .action-btn-group{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
     .btn-icon{padding:2px 6px;font-size:11px;border-radius:4px;cursor:pointer;border:none;color:white;line-height:1.2}
@@ -56,13 +70,18 @@
 
     .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000}
     .modal-box{background:white;padding:20px;border-radius:8px;width:300px;box-shadow:0 4px 15px #0003}
+
+    @media print {
+      body { background: white; padding: 0; }
+      .add-box, .card.grid, .rule-info-box, .action-btn-group, .btn-col-green, .btn-del-day { display: none !important; }
+      .card { box-shadow: none; padding: 0; margin: 0; }
+    }
   </style>
 </head>
 <body>
 
 <h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
 
-<!-- अंक मूल्याङ्कन नियम -->
 <div class="rule-info-box">
   <span style="font-weight:bold;color:#1e293b;">📌 अंक मूल्याङ्कन नियम:</span>
   <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>हरियो टिक = +५ अंक</span></div>
@@ -70,7 +89,6 @@
   <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>खाली / बाँकी = ० अंक</span></div>
 </div>
 
-<!-- १. विद्यार्थी तथा मिति व्यवस्थापन -->
 <div class="add-box">
   <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ विद्यार्थी र नेपाली मिति (वि.सं.)</h3>
   <div class="grid">
@@ -122,7 +140,6 @@
   </div>
 </div>
 
-<!-- २. कक्षा, विषय र फिल्टर -->
 <div class="card grid">
   <div>
     <label>कक्षा (Class):</label>
@@ -148,16 +165,17 @@
     <button class="btn-pub" onclick="publishData()">🌐 Publish गर्नुहोस्</button>
   </div>
   <div style="align-self:end">
-    <button class="danger" onclick="resetCurrentSubject()">यो विषयको Data Reset</button>
+    <button class="btn-pdf" onclick="downloadPDF()">📥 PDF डाउनलोड</button>
+  </div>
+  <div style="align-self:end">
+    <button class="danger" onclick="resetCurrentSubject()">विषयको सबै Data Reset</button>
   </div>
 </div>
 
-<!-- ३. मुख्य टेबल -->
 <div class="card" style="overflow:auto">
   <table id="tbl"></table>
 </div>
 
-<!-- ४. Edit Modal -->
 <div id="editModal" class="modal-overlay">
   <div class="modal-box">
     <h3 style="margin-top:0">विद्यार्थी सच्याउनुहोस्</h3>
@@ -192,6 +210,7 @@ const SUBJECTS = {
 const defaultClass9Names = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
 
 const nepaliDigits = ['०','१','२','३','४','५','६','७','८','९'];
+const monthOrder = { "बैशाख": 1, "जेठ": 2, "असार": 3, "साउन": 4, "भदौ": 5, "असोज": 6, "कात्तिक": 7, "मंसिर": 8, "पुस": 9, "माघ": 10, "फागुन": 11, "चैत": 12 };
 
 let currentRoster = []; 
 let D = { m: {}, days: [] };
@@ -237,11 +256,35 @@ function getSubjectKey() {
 function loadCurrentSubjectData() {
   let saved = localStorage.getItem(getSubjectKey());
   D = saved ? JSON.parse(saved) : { m: {}, days: [] };
+  sortDays();
   render();
 }
 
 function saveSubjectData() {
   localStorage.setItem(getSubjectKey(), JSON.stringify(D));
+}
+
+// महिना र गतेको आधारमा मितिहरूलाई सधैं सहि क्रमानुसार (Chronological Order) मिलाउने 
+function sortDays() {
+  if (!D.days) return;
+  D.days.sort((a, b) => {
+    let partsA = a.split(' ');
+    let partsB = b.split(' ');
+    let mNumA = monthOrder[partsA[0]] || 0;
+    let mNumB = monthOrder[partsB[0]] || 0;
+    if (mNumA !== mNumB) return mNumA - mNumB;
+
+    let getDayVal = (dayStr) => {
+      let numDigits = (dayStr.match(/[०-९]/g) || []).join('');
+      let engNum = '';
+      for(let char of numDigits) {
+        let idx = nepaliDigits.indexOf(char);
+        engNum += (idx !== -1 ? idx : '');
+      }
+      return parseInt(engNum) || 0;
+    };
+    return getDayVal(partsA[1]) - getDayVal(partsB[1]);
+  });
 }
 
 function onClassChange() {
@@ -323,18 +366,32 @@ function deleteStudent(stId) {
 }
 
 function addDay() {
-  let y = document.getElementById('npYear').value;
   let m = document.getElementById('npMonth').value;
   let d = document.getElementById('npDay').value;
-
   let bsDate = `${m} ${d}`;
 
   if (bsDate && !D.days.includes(bsDate)) { 
     D.days.push(bsDate); 
+    sortDays();
     saveSubjectData(); 
     render(); 
   } else if (D.days.includes(bsDate)) {
     alert('यो मिति पहिले नै थपिइसकेको छ।');
+  }
+}
+
+// विशेष मिति (Day) मात्रै मेटाउने / Reset गर्ने फंक्सन
+function deleteDay(d) {
+  if (confirm(`के तपाईं "${d}" को सम्पूर्ण डाटा हटाउन चाहनुहुन्छ?`)) {
+    D.days = D.days.filter(item => item !== d);
+    // सबै विद्यार्थीहरूको यो मितिको रेकर्ड हटाउने
+    Object.keys(D.m).forEach(stId => {
+      if (D.m[stId][d]) {
+        delete D.m[stId][d];
+      }
+    });
+    saveSubjectData();
+    render();
   }
 }
 
@@ -348,12 +405,11 @@ function clickCell(stId, d, k) {
   render();
 }
 
-// कुनै विशेष मितिको विशेष कोलम (HW/CW/DIS) मा सबैलाई हरियो टिक लगाउने
 function setColumnAllGreen(d, colKey) {
   currentRoster.forEach(s => {
     if (!D.m[s.id]) D.m[s.id] = {};
     if (!D.m[s.id][d]) D.m[s.id][d] = {};
-    D.m[s.id][d][colKey] = 1; // 1 भनेको हरियो टिक (✓)
+    D.m[s.id][d][colKey] = 1;
   });
   saveSubjectData();
   render();
@@ -379,7 +435,7 @@ function render() {
 
   let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
   D.days.forEach(d => {
-    h += `<th colspan="4" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">${d}</th>`;
+    h += `<th colspan="4" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">${d} <button class="btn-del-day" onclick="deleteDay('${d}')" title="यो मिति हटाउनुहोस्">✕</button></th>`;
   });
   h += '</tr><tr>';
   
@@ -466,8 +522,12 @@ function publishData() {
   }, 1000);
 }
 
+function downloadPDF() {
+  window.print();
+}
+
 function resetCurrentSubject() {
-  if (confirm('यो विषयको डाटा/अंकहरू मात्र हटाउने?')) { 
+  if (confirm('सावधानी: यसले यो विषयको सबै दिनको सम्पूर्ण डाटा स्थायी रूपमा मेटाउनेछ। के तपाईं निश्चित हुनुहुन्छ?')) { 
     localStorage.removeItem(getSubjectKey()); 
     loadCurrentSubjectData(); 
   }
