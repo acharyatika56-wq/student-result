@@ -2,7 +2,7 @@
 <html lang="ne">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Teacher Dashboard - Pro</title>
+  <title>Teacher Dashboard - Fixed</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
@@ -50,7 +50,7 @@
 
     .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000}
     .modal-box{background:white;padding:20px;border-radius:8px;width:300px;box-shadow:0 4px 15px #0003}
-    #loadingStatus{text-align:center;padding:10px;font-weight:bold;color:#0284c7;}
+    #loadingStatus{text-align:center;padding:12px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:15px;}
 
     @media print {
       body { background: white; padding: 0; }
@@ -61,9 +61,9 @@
 </head>
 <body>
 
-<h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel - Secured)</h2>
+<h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel - Fixed)</h2>
 
-<div id="loadingStatus">डाटा सर्भरबाट लोड हुँदैछ...</div>
+<div id="loadingStatus">सर्भरबाट डेटा लोड हुँदैछ...</div>
 
 <div class="rule-info-box">
   <span style="font-weight:bold;color:#1e293b;">📌 अंक मूल्याङ्कन नियम:</span>
@@ -97,8 +97,7 @@
         <select id="npMonth">
           <option value="बैशाख">बैशाख</option><option value="जेठ">जेठ</option><option value="असार">असार</option>
           <option value="साउन">साउन</option><option value="भदौ" selected>भदौ</option><option value="असोज">असोज</option>
-          <option value="कात्तिक">कात्तिक</option><option value="मंसिर">मंसिर</option><option value="पुस">पुस</option>
-          <option value="माघ">माघ</option><option value="फागुन">फागुन</option><option value="चैत">चैत</option>
+          <option value="कात्तिक">कात्तिक</option><option value="मंसिर">मंसिर</option><option value="पुस">पुस</option><option value="माघ">माघ</option><option value="फागुन">फागुन</option><option value="चैत">चैत</option>
         </select>
         <select id="npDay"></select>
       </div>
@@ -198,7 +197,7 @@ function setupNepaliDays() {
 }
 
 function sortDays() {
-  if (!currentDays) return;
+  if (!currentDays || currentDays.length === 0) return;
   currentDays.sort((a, b) => {
     let partsA = a.split(' ');
     let partsB = b.split(' ');
@@ -239,12 +238,16 @@ function onClassChange() {
 function fetchServerData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
-  document.getElementById('loadingStatus').style.display = "block";
-  document.getElementById('loadingStatus').textContent = "डाटा सर्भरबाट लोड हुँदैछ...";
+  
+  let statusBox = document.getElementById('loadingStatus');
+  statusBox.style.display = "block";
+  statusBox.textContent = "सर्भरबाट डाटा लोड हुँदैछ...";
 
   fetch(`${API_URL}?className=${cls}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
+      statusBox.style.display = "none";
+      
       if (data && data.students && data.students.length > 0) {
         currentStudents = data.students.map((s, i) => ({
           id: s.id || ("st_" + i),
@@ -253,12 +256,12 @@ function fetchServerData() {
         }));
         currentDays = data.days || [];
         currentMarks = {};
-        data.students.forEach(s => {
-          let id = s.id || ("st_" + s.name);
+        data.students.forEach((s, i) => {
+          let id = s.id || ("st_" + i);
           currentMarks[id] = s.m || {};
         });
       } else {
-        // यदि सर्भरमा छैन भने डिफल्ट विद्यार्थी राख्ने
+        // यदि सर्भरमा रेकर्ड छैन भने कक्षा ९ को लागि डिफल्ट नाम राख्ने वा खाली राख्ने
         if (cls === "9") {
           currentStudents = defaultClass9Names.map((n, i) => ({ id: "st_" + i, name: n, sec: 'Darwin' }));
         } else {
@@ -267,14 +270,19 @@ function fetchServerData() {
         currentDays = [];
         currentMarks = {};
       }
+      
       sortDays();
-      document.getElementById('loadingStatus').style.display = "none";
       render();
     })
     .catch(err => {
       console.error(err);
-      document.getElementById('loadingStatus').textContent = "सर्भरबाट डाटा ल्याउन समस्या भयो। अफलाइन मोडबाट लोड गरिएको छ।";
-      setTimeout(() => { document.getElementById('loadingStatus').style.display = "none"; }, 3000);
+      statusBox.textContent = "डेटा लोड गर्न सकिएन। नेटवर्क कनेक्सन चेक गर्नुहोस्।";
+      setTimeout(() => { statusBox.style.display = "none"; }, 4000);
+      
+      // यदि फेच फेल भए पनि कम्तीमा डिफल्ट विद्यार्थी देखाउने
+      if (cls === "9" && currentStudents.length === 0) {
+        currentStudents = defaultClass9Names.map((n, i) => ({ id: "st_" + i, name: n, sec: 'Darwin' }));
+      }
       render();
     });
 }
@@ -393,28 +401,32 @@ function render() {
   });
   h += '</tr></thead><tbody>';
 
-  filteredStudents.forEach((s, i) => {
-    h += `<tr>
-      <td>${i + 1}</td>
-      <td style="text-align:left;font-weight:bold;padding-left:8px">
-        ${s.name}
-        <span class="action-btn-group">
-          <button class="btn-icon btn-edit-icon" onclick="openEditModal('${s.id}')">✏️</button>
-          <button class="btn-icon btn-del-icon" onclick="deleteStudent('${s.id}')">🗑️</button>
-        </span>
-      </td>
-      <td>${s.sec}</td>`;
-    
-    currentDays.forEach((d, dayIndex) => {
-      let a = (currentMarks[s.id] && currentMarks[s.id][d]) ? currentMarks[s.id][d] : {};
-      ['hw', 'cw', 'dis'].forEach(k => {
-        let v = a[k] || 0;
-        h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}" onclick="clickCell('${s.id}','${d}','${k}')">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+  if (filteredStudents.length === 0) {
+    h += `<tr><td colspan="10" style="padding:20px; color:#666;">कुनै पनि विद्यार्थी भेटिएन।</td></tr>`;
+  } else {
+    filteredStudents.forEach((s, i) => {
+      h += `<tr>
+        <td>${i + 1}</td>
+        <td style="text-align:left;font-weight:bold;padding-left:8px">
+          ${s.name}
+          <span class="action-btn-group">
+            <button class="btn-icon btn-edit-icon" onclick="openEditModal('${s.id}')">✏️</button>
+            <button class="btn-icon btn-del-icon" onclick="deleteStudent('${s.id}')">🗑️</button>
+          </span>
+        </td>
+        <td>${s.sec}</td>`;
+      
+      currentDays.forEach((d, dayIndex) => {
+        let a = (currentMarks[s.id] && currentMarks[s.id][d]) ? currentMarks[s.id][d] : {};
+        ['hw', 'cw', 'dis'].forEach(k => {
+          let v = a[k] || 0;
+          h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}" onclick="clickCell('${s.id}','${d}','${k}')">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+        });
+        h += `<td class="score-cell">${calculateDayScore(s.id, dayIndex)}</td>`;
       });
-      h += `<td class="score-cell">${calculateDayScore(s.id, dayIndex)}</td>`;
+      h += `</tr>`;
     });
-    h += `</tr>`;
-  });
+  }
 
   h += '</tbody>';
   document.getElementById('tbl').innerHTML = h;
@@ -437,8 +449,9 @@ function publishData() {
     data: { students: formattedStudents, days: currentDays }
   };
 
-  document.getElementById('loadingStatus').style.display = "block";
-  document.getElementById('loadingStatus').textContent = "डेटा सर्भरमा सेभ गरिंदैछ...";
+  let statusBox = document.getElementById('loadingStatus');
+  statusBox.style.display = "block";
+  statusBox.textContent = "डेटा सर्भरमा सेभ गरिंदैछ...";
 
   let iframe = document.createElement('iframe');
   iframe.name = 'hidden_iframe';
@@ -462,7 +475,7 @@ function publishData() {
   setTimeout(() => {
     document.body.removeChild(form);
     document.body.removeChild(iframe);
-    document.getElementById('loadingStatus').style.display = "none";
+    statusBox.style.display = "none";
     alert(`Class ${cls} - ${sub} को डाटा सफलतापूर्वक सेभ भयो!`);
   }, 1200);
 }
@@ -477,7 +490,8 @@ function resetCurrentSubject() {
 
 window.onload = function() {
   setupNepaliDays();
-  onClassChange();
+  updateSubjectsList();
+  fetchServerData();
 };
 </script>
 </body>
