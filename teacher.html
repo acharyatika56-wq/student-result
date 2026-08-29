@@ -2,7 +2,7 @@
 <html lang="ne">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Teacher Dashboard - Fixed</title>
+  <title>Teacher Dashboard - Updated</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
@@ -61,7 +61,7 @@
 </head>
 <body>
 
-<h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel - Fixed)</h2>
+<h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
 
 <div id="loadingStatus">सर्भरबाट डेटा लोड हुँदैछ...</div>
 
@@ -175,8 +175,6 @@ const SUBJECTS = {
   "10": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"]
 };
 
-const defaultClass9Names = ['Aakriti Sunar','Arju KC','Aashika Khanal','Aashim Chaudhary','Aayush Kumal','Abdul Raheman Manihar','Akhil Pokhrel','Amit KC','Bibek Bhandari','Biggest Rayamajhi','Chahat Khatun','Elina Gurung','Grishma Acharya','Janaka Saru Magar','Karishma Budha Magar','Monika KC','Niraj Thapa','Prabin Pun Magar','Prabina Nepali','Prince Rana Magar','Rachana Shrestha','Sadikshya Gaire','Sajal Shrestha','Samjhana Thapa','Samyog Kalakheti','Shailesh BC','Shishir Chaudhary','Sushant Sunar','Swastika Kumal'];
-
 const nepaliDigits = ['०','१','२','३','४','५','६','७','८','९'];
 const monthOrder = { "बैशाख": 1, "जेठ": 2, "असार": 3, "साउन": 4, "भदौ": 5, "असोज": 6, "कात्तिक": 7, "मंसिर": 8, "पुस": 9, "माघ": 10, "फागुन": 11, "चैत": 12 };
 
@@ -238,12 +236,17 @@ function onClassChange() {
 function fetchServerData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
+  let sec = document.getElementById('sectionFilter').value;
+  
+  // यदि ALL छ भने पहिलो सेक्सन वा Default Darwin को डेटा तान्ने
+  let targetSec = (sec === 'ALL') ? 'Darwin' : sec;
   
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
   statusBox.textContent = "सर्भरबाट डाटा लोड हुँदैछ...";
 
-  fetch(`${API_URL}?className=${cls}&subject=${sub}`)
+  // अब सर्भरमा className, section र subject तिनटै पठाइएको छ
+  fetch(`${API_URL}?className=${cls}&section=${targetSec}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
       statusBox.style.display = "none";
@@ -252,7 +255,7 @@ function fetchServerData() {
         currentStudents = data.students.map((s, i) => ({
           id: s.id || ("st_" + i),
           name: s.name,
-          sec: s.sec || 'Darwin'
+          sec: s.sec || targetSec
         }));
         currentDays = data.days || [];
         currentMarks = {};
@@ -261,12 +264,7 @@ function fetchServerData() {
           currentMarks[id] = s.m || {};
         });
       } else {
-        // यदि सर्भरमा रेकर्ड छैन भने कक्षा ९ को लागि डिफल्ट नाम राख्ने वा खाली राख्ने
-        if (cls === "9") {
-          currentStudents = defaultClass9Names.map((n, i) => ({ id: "st_" + i, name: n, sec: 'Darwin' }));
-        } else {
-          currentStudents = [];
-        }
+        currentStudents = [];
         currentDays = [];
         currentMarks = {};
       }
@@ -278,11 +276,6 @@ function fetchServerData() {
       console.error(err);
       statusBox.textContent = "डेटा लोड गर्न सकिएन। नेटवर्क कनेक्सन चेक गर्नुहोस्।";
       setTimeout(() => { statusBox.style.display = "none"; }, 4000);
-      
-      // यदि फेच फेल भए पनि कम्तीमा डिफल्ट विद्यार्थी देखाउने
-      if (cls === "9" && currentStudents.length === 0) {
-        currentStudents = defaultClass9Names.map((n, i) => ({ id: "st_" + i, name: n, sec: 'Darwin' }));
-      }
       render();
     });
 }
@@ -402,7 +395,7 @@ function render() {
   h += '</tr></thead><tbody>';
 
   if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="10" style="padding:20px; color:#666;">कुनै पनि विद्यार्थी भेटिएन।</td></tr>`;
+    h += `<tr><td colspan="10" style="padding:20px; color:#666;">कुनै पनि विद्यार्थी भेटिएन। माथि विद्यार्थी थप्नुहोस् वा सही सेक्सन छान्नुहोस्।</td></tr>`;
   } else {
     filteredStudents.forEach((s, i) => {
       h += `<tr>
@@ -435,6 +428,10 @@ function render() {
 function publishData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
+  let sec = document.getElementById('sectionFilter').value;
+  
+  // यदि ALL छ भने Publish गर्दा चेतावनी दिने वा Darwin मा सेभ हुने बनाउने
+  let targetSec = (sec === 'ALL') ? 'Darwin' : sec;
 
   let formattedStudents = currentStudents.map(st => ({
     id: st.id,
@@ -443,8 +440,10 @@ function publishData() {
     m: currentMarks[st.id] || {}
   }));
 
+  // अब payload मा section पनि अनिवार्य रूपमा पठाइएको छ
   let payload = {
     className: cls,
+    section: targetSec,
     subject: sub,
     data: { students: formattedStudents, days: currentDays }
   };
@@ -476,7 +475,7 @@ function publishData() {
     document.body.removeChild(form);
     document.body.removeChild(iframe);
     statusBox.style.display = "none";
-    alert(`Class ${cls} - ${sub} को डाटा सफलतापूर्वक सेभ भयो!`);
+    alert(`Class ${cls} (${targetSec}) - ${sub} को डाटा सफलतापूर्वक सेभ भयो!`);
   }, 1200);
 }
 
