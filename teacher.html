@@ -217,6 +217,12 @@ function sortDays() {
   });
 }
 
+// 📌 विद्यार्थीहरूको नामलाई अटोमेटिक वर्णानुक्रम (Alphabetical) अनुसार मिलाउने फंक्सन
+function sortStudentsAlphabetically() {
+  if (!currentStudents || currentStudents.length === 0) return;
+  currentStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
+}
+
 function updateSubjectsList() {
   let cls = document.getElementById('className').value;
   let subSelect = document.getElementById('subject');
@@ -266,6 +272,7 @@ function fetchServerData() {
         currentMarks = {};
       }
       sortDays();
+      sortStudentsAlphabetically(); // 👉 यहाँ अटो-सर्ट हुन्छ
       render();
     })
     .catch(err => {
@@ -284,6 +291,8 @@ function addStudent() {
 
   currentStudents.push({ id: "st_" + Date.now(), name: name, sec: sec });
   nameInput.value = '';
+  
+  sortStudentsAlphabetically(); // 👉 नयाँ थप्दा पनि अटो-सर्ट हुन्छ
   render();
 }
 
@@ -305,7 +314,12 @@ function saveEdit() {
   if (!newName) return alert("नाम खाली राख्न मिल्दैन।");
 
   let st = currentStudents.find(s => s.id === stId);
-  if (st) { st.name = newName; st.sec = newSec; render(); }
+  if (st) { 
+    st.name = newName; 
+    st.sec = newSec; 
+    sortStudentsAlphabetically(); // 👉 एडिट गरेर नाम फेर्दा पनि मिलाएर बस्छ
+    render(); 
+  }
   closeEditModal();
 }
 
