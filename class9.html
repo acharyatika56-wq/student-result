@@ -47,7 +47,7 @@
 
 <h2>🎓 कक्षा ९ विद्यार्थी प्रगति प्रतिवेदन (Class 9 Report Panel)</h2>
 
-<div id="loadingStatus">सर्भरबाट डेटा लोड हुँदैछ...</div>
+<div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
 
 <div class="rule-info-box">
   <span style="font-weight:bold;color:#1e293b;">📌 अंक मूल्याङ्कन नियम:</span>
@@ -97,7 +97,7 @@
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzyWzN7z-8lEBU5-0-dBgjlmZaHpndfEqgTsWPx2vha99yuN34AvA8VQ_dQ2lB9rjxPBQ/exec";
-const CLASS_NAME = "9"; // यो फाइल कक्षा ९ को लागि हो
+const CLASS_NAME = "9"; // कक्षा ९ फिक्स गरिएको
 
 let globalServerData = { students: [], days: [] };
 
@@ -109,6 +109,7 @@ function fetchServerData() {
   statusBox.style.display = "block";
   statusBox.textContent = "सर्भरबाट प्रगति विवरण लोड हुँदैछ...";
 
+  // यहाँ className मा "9" पठाएर डाटा मागिन्छ
   fetch(`${API_URL}?className=${CLASS_NAME}&section=${targetSec}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
@@ -132,19 +133,18 @@ function fetchServerData() {
 }
 
 function populateStudentDropdown() {
-  let targetSec = document.getElementById('sectionFilter').value;
   let studentSelect = document.getElementById('studentSelect');
   studentSelect.innerHTML = '';
 
-  let filteredStudents = globalServerData.students.filter(s => s.sec === targetSec);
+  let students = globalServerData.students || [];
 
-  if (filteredStudents.length === 0) {
+  if (students.length === 0) {
     let opt = document.createElement('option');
     opt.value = "";
     opt.textContent = "विद्यार्थी उपलब्ध छैन";
     studentSelect.appendChild(opt);
   } else {
-    filteredStudents.forEach(s => {
+    students.forEach(s => {
       let opt = document.createElement('option');
       opt.value = s.id;
       opt.textContent = s.name;
@@ -173,7 +173,7 @@ function renderStudentReport() {
 
   let banner = document.getElementById('studentInfoBanner');
   if (!student) {
-    banner.textContent = `कक्षा: ${CLASS_NAME} | सेक्सन: ${targetSec} | विषय: ${sub} — कोही विद्यार्थी छैनन्`;
+    banner.textContent = `कक्षा: ${CLASS_NAME} | सेक्सन: ${targetSec} | विषय: ${sub} — कोही विद्यार्थी भेटिएनन्`;
     document.getElementById('tbl').innerHTML = `<tr><td style="padding:20px; color:#666;">डाटा उपलब्ध छैन।</td></tr>`;
     return;
   }
