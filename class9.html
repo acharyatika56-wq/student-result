@@ -152,7 +152,13 @@ function renderAllStudentsReport() {
   let students = globalServerData.students || [];
   let days = globalServerData.days || [];
 
-  // फिल्टरिङ (सर्च टेक्स्ट अनुसार)
+  // 👉 सेक्सन अनुसार मात्र छुट्याउने फिल्टर कोड (Newton मा Darwin नदेखिने बनाउन)
+  students = students.filter(s => !s.sec || s.sec === targetSec);
+
+  // 👉 विद्यार्थीहरूको नामलाई वर्णानुक्रम (Alphabetical) अनुसार मिलाउने
+  students.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
+
+  // सर्च टेक्स्ट अनुसार फिल्टर गर्ने
   let filteredStudents = students.filter(s => s.name.toLowerCase().includes(searchText));
 
   let h = '<thead><tr><th rowspan="2" style="position:sticky;left:0;z-index:3;background:#173f78;">विद्यार्थीको नाम (Student Name)</th>';
