@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="ne">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Teacher Dashboard - Updated</title>
   <style>
     *{box-sizing:border-box}
@@ -237,20 +238,16 @@ function fetchServerData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
   let sec = document.getElementById('sectionFilter').value;
-  
-  // यदि ALL छ भने पहिलो सेक्सन वा Default Darwin को डेटा तान्ने
   let targetSec = (sec === 'ALL') ? 'Darwin' : sec;
   
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
   statusBox.textContent = "सर्भरबाट डाटा लोड हुँदैछ...";
 
-  // अब सर्भरमा className, section र subject तिनटै पठाइएको छ
   fetch(`${API_URL}?className=${cls}&section=${targetSec}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
       statusBox.style.display = "none";
-      
       if (data && data.students && data.students.length > 0) {
         currentStudents = data.students.map((s, i) => ({
           id: s.id || ("st_" + i),
@@ -268,7 +265,6 @@ function fetchServerData() {
         currentDays = [];
         currentMarks = {};
       }
-      
       sortDays();
       render();
     })
@@ -429,8 +425,6 @@ function publishData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
   let sec = document.getElementById('sectionFilter').value;
-  
-  // यदि ALL छ भने Publish गर्दा चेतावनी दिने वा Darwin मा सेभ हुने बनाउने
   let targetSec = (sec === 'ALL') ? 'Darwin' : sec;
 
   let formattedStudents = currentStudents.map(st => ({
@@ -440,7 +434,6 @@ function publishData() {
     m: currentMarks[st.id] || {}
   }));
 
-  // अब payload मा section पनि अनिवार्य रूपमा पठाइएको छ
   let payload = {
     className: cls,
     section: targetSec,
@@ -493,5 +486,6 @@ window.onload = function() {
   fetchServerData();
 };
 </script>
+
 </body>
 </html>
