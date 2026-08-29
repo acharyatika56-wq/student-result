@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Class 8 - All Students Report View</title>
+  <title>Class 9 - All Students Report View</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
@@ -47,7 +47,7 @@
 </head>
 <body>
 
-<h2>🎓 कक्षा ८ - सबै विद्यार्थीहरूको प्रगति प्रतिवेदन (Class 8 Report)</h2>
+<h2>🎓 कक्षा ९ - सबै विद्यार्थीहरूको प्रगति प्रतिवेदन (All Students Report)</h2>
 
 <div id="loadingStatus">सर्भरबाट डेटा लोड हुँदैछ...</div>
 
@@ -74,10 +74,10 @@
         <option value="Math">Math</option>
         <option value="Science">Science</option>
         <option value="Nepali">Nepali</option>
-        <option value="English-I">English-I</option>
-        <option value="English-II">English-II</option>
+        <option value="English">English</option>
         <option value="Social Studies">Social Studies</option>
-        <option value="Hamro Rapti">Hamro Rapti</option>
+        <option value="Opt.Math">Opt.Math</option>
+        <option value="Computer Science">Computer Science</option>
       </select>
     </div>
     <div>
@@ -91,7 +91,7 @@
 </div>
 
 <div class="card">
-  <div id="infoBanner" class="section-title">कक्षा: ८ | सेक्सन: Darwin | विषय: Math</div>
+  <div id="infoBanner" class="section-title">कक्षा: ९ | सेक्सन: Darwin | विषय: Math</div>
   <div style="overflow:auto; max-height:600px;">
     <table id="tbl"></table>
   </div>
@@ -99,7 +99,7 @@
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbzyWzN7z-8lEBU5-0-dBgjlmZaHpndfEqgTsWPx2vha99yuN34AvA8VQ_dQ2lB9rjxPBQ/exec";
-const CLASS_NAME = "8";
+const CLASS_NAME = "9";
 
 let globalServerData = { students: [], days: [] };
 
@@ -152,6 +152,7 @@ function renderAllStudentsReport() {
   let students = globalServerData.students || [];
   let days = globalServerData.days || [];
 
+  // फिल्टरिङ (सर्च टेक्स्ट अनुसार)
   let filteredStudents = students.filter(s => s.name.toLowerCase().includes(searchText));
 
   let h = '<thead><tr><th rowspan="2" style="position:sticky;left:0;z-index:3;background:#173f78;">विद्यार्थीको नाम (Student Name)</th>';
