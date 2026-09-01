@@ -17,7 +17,7 @@
     .bg-red{background:#dc2626}
     .bg-gray{background:#64748b}
 
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
     label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
     select,input,button{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
@@ -27,11 +27,15 @@
     th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
     th{background:#173f78;color:white}
     .sub-th{background:#1e4c8a;font-size:11px;padding:4px;width:38px}
-    .score-th{background:#0d5257;font-size:11px;padding:4px;width:45px;color:#fff}
+    .score-th{background:#0d5257;font-size:11px;padding:4px;width:50px;color:#fff}
     .cell{font-size:18px;min-width:35px;user-select:none}
     .green{background:#effaf3;color:green}
     .red{background:#fff1f1;color:red}
     .score-cell{background:#e2f8ff;font-weight:bold;color:#0369a1;font-size:14px}
+    
+    /* कुल अंक (Total Score) Column को Style */
+    .total-score-cell{background:#dcfce7;font-weight:bold;color:#15803d;font-size:15px;min-width:80px}
+
     .student-name-td{text-align:left;padding-left:10px;font-weight:bold;background:#f8fafc;min-width:160px;position:sticky;left:0;z-index:2}
 
     #loadingStatus{text-align:center;padding:12px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:15px;display:none;}
@@ -59,7 +63,7 @@
 </div>
 
 <div class="filter-box">
-  <h3 style="margin:0 0 10px 0;color:#0369a1;">🔍 सेक्सन, विषय छान्नुहोस् र नाम खोज्नुहोस्</h3>
+  <h3 style="margin:0 0 10px 0;color:#0369a1;">🔍 सेक्सन, विषय छान्नुहोस् र फिल्टर गर्नुहोस्</h3>
   <div class="grid">
     <div>
       <label>सेक्सन (Section):</label>
@@ -81,11 +85,18 @@
       </select>
     </div>
     <div>
-      <label>विद्यार्थी खोज्नुहोस् (Search Name):</label>
+      <label>दिन फिल्टर (Date View):</label>
+      <select id="dateRangeFilter" onchange="renderAllStudentsReport()">
+        <option value="all">सबै दिनहरू (All Days)</option>
+        <option value="last7">अन्तिम ७ दिन (Last 7 Days)</option>
+      </select>
+    </div>
+    <div>
+      <label>विद्यार्थी खोज्नुहोस्:</label>
       <input type="text" id="searchBox" placeholder="नाम टाइप गर्नुहोस्..." onkeyup="renderAllStudentsReport()">
     </div>
     <div style="align-self:end">
-      <button class="btn-pdf" onclick="window.print()">📥 प्रिन्ट / PDF डाउनलोड</button>
+      <button class="btn-pdf" onclick="window.print()">📥 प्रिन्ट / PDF</button>
     </div>
   </div>
 </div>
@@ -131,20 +142,23 @@ function fetchServerData() {
     });
 }
 
-function calculateDayScore(studentMarks, days, uptoDayIndex) {
-  let z = 0;
-  for (let i = 0; i <= uptoDayIndex; i++) {
-    let day = days[i];
-    let a = studentMarks[day] || {};
-    Object.values(a).forEach(v => { z += (v === 1 ? 5 : v === -1 ? -2.5 : 0); });
-  }
-  return z;
+// १. एक दिनको मात्र अंक निकाल्ने फङ्सन (Per Day Score)
+function getSingleDayScore(dayData) {
+  if (!dayData) return 0;
+  let score = 0;
+  ['hw', 'cw', 'dis'].forEach(key => {
+    let val = dayData[key];
+    if (val === 1) score += 5;
+    else if (val === -1) score -= 2.5;
+  });
+  return score;
 }
 
 function renderAllStudentsReport() {
   let sub = document.getElementById('subject').value;
   let targetSec = document.getElementById('sectionFilter').value;
   let searchText = document.getElementById('searchBox').value.toLowerCase().trim();
+  let dateRange = document.getElementById('dateRangeFilter').value;
 
   let banner = document.getElementById('infoBanner');
   banner.textContent = `कक्षा: ${CLASS_NAME} | सेक्सन: ${targetSec} | विषय: ${sub}`;
@@ -152,48 +166,66 @@ function renderAllStudentsReport() {
   let students = globalServerData.students || [];
   let days = globalServerData.days || [];
 
-  // 👉 सेक्सन अनुसार मात्र छुट्याउने फिल्टर कोड (Newton मा Darwin नदेखिने बनाउन)
+  // 'Last 7 Days' छानिएको भए अन्तिमका ७ दिन मात्र फिल्टर गर्ने
+  if (dateRange === 'last7' && days.length > 7) {
+    days = days.slice(-7);
+  }
+
+  // सेक्सन अनुसार फिल्टर गर्ने
   students = students.filter(s => !s.sec || s.sec === targetSec);
 
-  // 👉 विद्यार्थीहरूको नामलाई वर्णानुक्रम (Alphabetical) अनुसार मिलाउने
-  students.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
+  // नाम अनुसार Alphabetical order मा मिलाउने
+  students.sort((a, b) => a.name.localeCompare(b.name));
 
-  // सर्च टेक्स्ट अनुसार फिल्टर गर्ने
+  // सर्च फिल्टर
   let filteredStudents = students.filter(s => s.name.toLowerCase().includes(searchText));
 
-  let h = '<thead><tr><th rowspan="2" style="position:sticky;left:0;z-index:3;background:#173f78;">विद्यार्थीको नाम (Student Name)</th>';
+  // टेबलको Header बनाउने
+  let h = '<thead><tr><th rowspan="2" style="position:sticky;left:0;z-index:3;background:#173f78;">विद्यार्थीको नाम</th>';
+  
   days.forEach(d => {
     h += `<th colspan="4" style="padding:6px;font-size:13px;">${d}</th>`;
   });
-  h += '</tr><tr>';
+  
+  // दायाँ तर्फ कुल अंक (Total Score) को Column Header
+  h += '<th rowspan="2" style="background:#15803d;color:white;min-width:80px;">जम्मा अंक (Total)</th></tr><tr>';
   
   days.forEach(() => {
     h += `<th class="sub-th">HW</th><th class="sub-th">CW</th><th class="sub-th">DIS</th><th class="score-th">अंक</th>`;
   });
+  
   h += '</tr></thead><tbody>';
 
   if (days.length === 0) {
-    h += `<tr><td colspan="20" style="padding:20px; color:#666;">यो विषयको लागि अहिलेसम्म कुनै पनि मितिको रेकर्ड राखिएको छैन।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:20px; color:#666;">यो विषयको लागि रेकर्ड राखिएको छैन।</td></tr>`;
   } else if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="20" style="padding:20px; color:#666;">तपाईंले खोज्नुभएको नामको विद्यार्थी भेटिएन।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:20px; color:#666;">तपाईंले खोज्नुभएको विद्यार्थी भेटिएन।</td></tr>`;
   } else {
     filteredStudents.forEach(student => {
       h += `<tr>`;
       h += `<td class="student-name-td">${student.name}</td>`;
       
       let studentMarks = student.m || {};
-      days.forEach((d, dayIndex) => {
-        let a = studentMarks[d] || {};
-        let hw = a['hw'] || 0;
-        let cw = a['cw'] || 0;
-        let dis = a['dis'] || 0;
-        let dayScore = calculateDayScore(studentMarks, days, dayIndex);
+      let grandTotalScore = 0; // सबै दिनको जम्मा अंक जोड्न variable
 
+      days.forEach(d => {
+        let dayData = studentMarks[d] || {};
+        let hw = dayData['hw'] || 0;
+        let cw = dayData['cw'] || 0;
+        let dis = dayData['dis'] || 0;
+        
+        let dailyScore = getSingleDayScore(dayData);
+        grandTotalScore += dailyScore; // tyo दिनको अंक जोड्दै जाने
+
+        // HW, CW, DIS को ३ वटा अलग-अलग कोठा र १ वटा दिनको कुल अंक कोठा
         h += `<td class="cell ${hw == 1 ? 'green' : hw == -1 ? 'red' : ''}">${hw == 1 ? '✓' : hw == -1 ? '✕' : '—'}</td>`;
         h += `<td class="cell ${cw == 1 ? 'green' : cw == -1 ? 'red' : ''}">${cw == 1 ? '✓' : cw == -1 ? '✕' : '—'}</td>`;
         h += `<td class="cell ${dis == 1 ? 'green' : dis == -1 ? 'red' : ''}">${dis == 1 ? '✓' : dis == -1 ? '✕' : '—'}</td>`;
-        h += `<td class="score-cell">${dayScore}</td>`;
+        h += `<td class="score-cell">${dailyScore}</td>`;
       });
+
+      // अन्तिम (Right side) मा छानिएका दिनहरूको "जम्मा अंक" देखाउने Column
+      h += `<td class="total-score-cell">${grandTotalScore}</td>`;
       h += `</tr>`;
     });
   }
