@@ -111,7 +111,8 @@ function fetchServerData() {
   statusBox.style.display = "block";
   statusBox.textContent = "सर्भरबाट प्रगति विवरण लोड हुँदैछ...";
 
-  fetch(`${API_URL}?className=${CLASS_NAME}&section=${targetSec}&subject=${sub}`)
+  // URL मा Sexion सानो वा ठूलो अक्षर जुनसुकै भए पनि सुरक्षित रूपमा पठाउने
+  fetch(`${API_URL}?className=${CLASS_NAME}&section=${encodeURIComponent(targetSec)}&subject=${encodeURIComponent(sub)}`)
     .then(res => res.json())
     .then(data => {
       statusBox.style.display = "none";
@@ -143,7 +144,7 @@ function calculateDayScore(studentMarks, days, uptoDayIndex) {
 
 function renderAllStudentsReport() {
   let sub = document.getElementById('subject').value;
-  let targetSec = document.getElementById('sectionFilter').value;
+  let targetSec = document.getElementById('sectionFilter').value.trim();
   let searchText = document.getElementById('searchBox').value.toLowerCase().trim();
 
   let banner = document.getElementById('infoBanner');
@@ -152,7 +153,20 @@ function renderAllStudentsReport() {
   let students = globalServerData.students || [];
   let days = globalServerData.days || [];
 
-  let filteredStudents = students.filter(s => s.name.toLowerCase().includes(searchText));
+  // JS FILTER FIX: सेक्सन र नाम दुवै मिलाएर फिल्टर गर्ने
+  let filteredStudents = students.filter(student => {
+    let matchesName = student.name ? student.name.toLowerCase().includes(searchText) : false;
+    
+    // यदि student data मा section वा sec छ भने त्यसलाई पनि strict filter गर्ने
+    let studentSec = student.section || student.sec || student.sectionName;
+    let matchesSection = true;
+    
+    if (studentSec) {
+      matchesSection = studentSec.toString().toLowerCase() === targetSec.toLowerCase();
+    }
+
+    return matchesName && matchesSection;
+  });
 
   let h = '<thead><tr><th rowspan="2" style="position:sticky;left:0;z-index:3;background:#173f78;">विद्यार्थीको नाम (Student Name)</th>';
   days.forEach(d => {
@@ -168,7 +182,7 @@ function renderAllStudentsReport() {
   if (days.length === 0) {
     h += `<tr><td colspan="20" style="padding:20px; color:#666;">यो विषयको लागि अहिलेसम्म कुनै पनि मितिको रेकर्ड राखिएको छैन।</td></tr>`;
   } else if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="20" style="padding:20px; color:#666;">तपाईंले खोज्नुभएको नामको विद्यार्थी भेटिएन।</td></tr>`;
+    h += `<tr><td colspan="20" style="padding:20px; color:#666;">तपाईंले खोज्नुभएको सेक्सन वा नामको विद्यार्थी भेटिएन।</td></tr>`;
   } else {
     filteredStudents.forEach(student => {
       h += `<tr>`;
