@@ -5,39 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Class 9 - All Students Report View</title>
   <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:8px}
-    .card{background:white;border-radius:8px;padding:8px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,0.05)}
-    .filter-box{background:#e0f2fe;border:1px solid #0284c7;padding:8px;border-radius:8px;margin-bottom:8px}
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f3f6fb; color: #172033; padding: 8px; }
+    .card { background: white; border-radius: 8px; padding: 8px; margin-bottom: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.05); }
+    .filter-box { background: #e0f2fe; border: 1px solid #0284c7; padding: 8px; border-radius: 8px; margin-bottom: 8px; }
     
-    .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
-    .rule-item{display:inline-flex;align-items:center;gap:4px;font-weight:bold}
-    .rule-badge{display:inline-block;padding:1px 5px;border-radius:3px;color:white;font-weight:bold;font-size:11px}
-    .bg-green{background:#16a34a}
-    .bg-red{background:#dc2626}
-    .bg-gray{background:#64748b}
+    .rule-info-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; }
+    .rule-item { display: inline-flex; align-items: center; gap: 4px; font-weight: bold; }
+    .rule-badge { display: inline-block; padding: 1px 5px; border-radius: 3px; color: white; font-weight: bold; font-size: 11px; }
+    .bg-green { background: #16a34a; }
+    .bg-red { background: #dc2626; }
+    .bg-gray { background: #64748b; }
 
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px}
-    label{font-weight:bold;font-size:11px;display:block;margin-bottom:2px}
-    select,input,button{width:100%;padding:5px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px}
-    button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
-    .btn-pdf{background:#ea580c;font-size:12px;padding:6px}
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; }
+    label { font-weight: bold; font-size: 11px; display: block; margin-bottom: 2px; }
+    select, input, button { width: 100%; padding: 5px 6px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; }
+    button { background: #1769aa; color: white; font-weight: bold; cursor: pointer; border: none; }
+    .btn-pdf { background: #ea580c; font-size: 12px; padding: 6px; }
 
-    table{border-collapse:collapse;width:100%;table-layout:auto;}
-    th,td{border:1px solid #cbd5e1;padding:2px 3px;text-align:center;font-size:11px}
-    th{background:#173f78;color:white;font-size:11px}
-    .sub-th{background:#1e4c8a;font-size:9px;padding:2px;width:22px}
-    .score-th{background:#0d5257;font-size:9px;padding:2px;width:28px;color:#fff}
-    .cell{font-size:12px;min-width:20px;user-select:none;font-weight:bold}
-    .green{background:#effaf3;color:green}
-    .red{background:#fff1f1;color:red}
-    .score-cell{background:#e2f8ff;font-weight:bold;color:#0369a1;font-size:11px}
+    table { border-collapse: collapse; width: 100%; table-layout: auto; }
+    th, td { border: 1px solid #cbd5e1; padding: 2px 3px; text-align: center; font-size: 11px; }
+    th { background: #173f78; color: white; font-size: 11px; }
+    .sub-th { background: #1e4c8a; font-size: 9px; padding: 2px; width: 22px; }
+    .score-th { background: #0d5257; font-size: 9px; padding: 2px; width: 28px; color: #fff; }
+    .cell { font-size: 12px; min-width: 20px; user-select: none; font-weight: bold; }
+    .green { background: #effaf3; color: green; }
+    .red { background: #fff1f1; color: red; }
+    .score-cell { background: #e2f8ff; font-weight: bold; color: #0369a1; font-size: 11px; }
     
-    .total-score-cell{background:#dcfce7;font-weight:bold;color:#15803d;font-size:12px;width:45px}
-    .student-name-td{text-align:left;padding-left:5px;font-weight:bold;background:#f8fafc;font-size:11px;white-space:nowrap}
+    .total-score-cell { background: #dcfce7; font-weight: bold; color: #15803d; font-size: 12px; width: 45px; }
+    .student-name-td { text-align: left; padding-left: 5px; font-weight: bold; background: #f8fafc; font-size: 11px; white-space: nowrap; }
 
-    #loadingStatus{text-align:center;padding:8px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:4px;margin-bottom:8px;display:none;font-size:12px}
-    .section-title {font-size: 13px; font-weight: bold; color: #0369a1; margin-bottom: 6px;}
+    #loadingStatus { text-align: center; padding: 8px; font-weight: bold; color: #0284c7; background: #e0f2fe; border-radius: 4px; margin-bottom: 8px; display: none; font-size: 12px; }
+    .section-title { font-size: 13px; font-weight: bold; color: #0369a1; margin-bottom: 6px; }
 
     @media print {
       body { background: white; padding: 0; }
@@ -161,17 +161,14 @@ function renderAllStudentsReport() {
   let students = globalServerData.students || [];
   let days = globalServerData.days || [];
 
-  // १. सेक्सन अनुसार Case-Insensitive Filter गर्छ
   let filteredStudents = students.filter(s => {
     let matchesSec = !s.sec || s.sec.toString().trim().toLowerCase() === targetSec.toString().trim().toLowerCase();
     let matchesSearch = s.name.toLowerCase().includes(searchText);
     return matchesSec && matchesSearch;
   });
 
-  // २. विद्यार्थीहरूलाई वर्णानुक्रम (Alphabetical Order) अनुसार क्रमबद्ध गर्छ
   filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
 
-  // ३. मितिको आधारमा Filter गर्छ (अन्तिम ७ दिन मात्र छान्दा)
   let displayDays = [...days];
   if (dateRange === 'last7' && displayDays.length > 7) {
     displayDays = displayDays.slice(-7);
