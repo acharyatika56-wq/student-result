@@ -6,48 +6,67 @@
   <title>Teacher Entry Panel</title>
   <style>
     *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:8px}
-    .card{background:white;border-radius:8px;padding:8px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,0.05)}
-    .filter-box{background:#e0f2fe;border:1px solid #0284c7;padding:8px;border-radius:8px;margin-bottom:8px}
+    body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f1f5f9;color:#0f172a;padding:12px}
     
-    .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
-    .rule-item{display:inline-flex;align-items:center;gap:4px;font-weight:bold}
-    .rule-badge{display:inline-block;padding:1px 5px;border-radius:3px;color:white;font-weight:bold;font-size:11px}
+    /* Header Card */
+    .app-header{background:linear-gradient(135deg, #1e3a8a, #3b82f6);color:white;padding:16px 20px;border-radius:12px;margin-bottom:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
+    .app-title{margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+    
+    .card{background:white;border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    
+    /* Rule Info Box */
+    .rule-info-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px}
+    .rule-item{display:inline-flex;align-items:center;gap:5px;font-weight:600}
+    .rule-badge{display:inline-block;padding:2px 6px;border-radius:4px;color:white;font-weight:700;font-size:11px}
     .bg-green{background:#16a34a}
     .bg-red{background:#dc2626}
     .bg-gray{background:#64748b}
 
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
-    label{font-weight:bold;font-size:11px;display:block;margin-bottom:2px}
-    select,input,button{width:100%;padding:5px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px}
-    button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
-    .btn-pub{background:#16a34a;margin-top:6px}
-    .btn-add{background:#0284c7;margin-top:6px}
-    .btn-edit-sec{background:#eab308;color:#000;font-size:9px;padding:1px 4px;margin-left:4px;border-radius:3px;cursor:pointer}
-
-    table{border-collapse:collapse;width:100%;table-layout:auto;}
-    th,td{border:1px solid #cbd5e1;padding:2px 3px;text-align:center;font-size:11px}
-    th{background:#173f78;color:white;font-size:11px}
-    .sub-th{background:#1e4c8a;font-size:9px;padding:2px;width:22px}
-    .score-th{background:#0d5257;font-size:9px;padding:2px;width:28px;color:#fff}
-    .cell{font-size:12px;min-width:20px;user-select:none;font-weight:bold;cursor:pointer}
-    .green{background:#effaf3;color:green}
-    .red{background:#fff1f1;color:red}
-    .score-cell{background:#e2f8ff;font-weight:bold;color:#0369a1;font-size:11px}
+    /* Filters Section */
+    .filter-box{background:#f0f9ff;border:1px solid #bae6fd;padding:12px;border-radius:10px;margin-bottom:12px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+    label{font-weight:600;font-size:11px;color:#0369a1;display:block;margin-bottom:4px}
+    select,input{width:100%;padding:7px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;outline:none;background:white}
+    select:focus,input:focus{border-color:#0284c7;box-shadow:0 0 0 2px rgba(2,132,199,0.2)}
     
-    .student-name-td{text-align:left;padding-left:5px;font-weight:bold;background:#f8fafc;font-size:11px;white-space:nowrap}
-    #loadingStatus{text-align:center;padding:8px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:4px;margin-bottom:8px;display:none;font-size:12px}
-    .section-title{font-size:13px;font-weight:bold;color:#0369a1;margin-bottom:6px}
+    button{width:100%;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all 0.2s}
+    .btn-add{background:#0284c7;color:white}
+    .btn-add:hover{background:#0369a1}
+    .btn-pub{background:#16a34a;color:white}
+    .btn-pub:hover{background:#15803d}
+    .btn-edit-sec{background:#fef08a;color:#854d0e;font-size:10px;padding:2px 6px;margin-left:4px;border-radius:4px;cursor:pointer;border:1px solid #fde047}
+
+    /* Table Container & Sticky Elements */
+    .table-container{width:100%;overflow-x:auto;max-height:70vh;border-radius:8px;border:1px solid #cbd5e1}
+    table{border-collapse:collapse;width:100%;background:white}
+    th,td{border:1px solid #cbd5e1;padding:4px 5px;text-align:center;font-size:11px}
+    
+    thead th{position:sticky;top:0;z-index:10;background:#1e3a8a;color:white}
+    .sub-th{background:#2563eb!important;font-size:10px;padding:3px;width:24px;top:28px}
+    .score-th{background:#0f766e!important;font-size:10px;padding:3px;width:30px;top:28px}
+    
+    .student-name-td, th:first-child{position:sticky;left:0;z-index:11;background:#f8fafc;text-align:left;padding-left:8px;font-weight:bold;white-space:nowrap}
+    th:first-child{z-index:12;background:#1e3a8a}
+
+    .cell{font-size:12px;min-width:22px;user-select:none;font-weight:bold;cursor:pointer}
+    .green{background:#f0fdf4;color:#16a34a}
+    .red{background:#fef2f2;color:#dc2626}
+    .score-cell{background:#e0f2fe;font-weight:bold;color:#0369a1;font-size:11px}
+    
+    #loadingStatus{text-align:center;padding:10px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:10px;display:none;font-size:12px}
+    .section-title{font-size:13px;font-weight:bold;color:#0f172a;margin-bottom:8px}
   </style>
 </head>
 <body>
 
-<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Teacher Entry Panel (नेपाली मिति सहित)</h3>
+<div class="app-header">
+  <h3 class="app-title">👨‍🏫 Teacher Entry Panel</h3>
+</div>
 
-<div id="loadingStatus">सर्भरबाट पुराना तथा नयाँ डाटा लोड हुँदैछ...</div>
+<div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
 
 <div class="rule-info-box">
-  <span style="font-weight:bold;color:#1e293b;">📌 अंक नियम:</span>
+  <span style="font-weight:bold;color:#0f172a;">📌 अंक नियम:</span>
   <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>+५ (गरेको)</span></div>
   <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>-२.५ (नगरेको)</span></div>
   <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>० (खाली)</span></div>
@@ -84,7 +103,7 @@
       </select>
     </div>
     <div>
-      <label>नयाँ मिति थप्नुहोस् (Calendar):</label>
+      <label>नयाँ मिति छान्नुहोस् (AD):</label>
       <input type="date" id="newDateInput">
     </div>
     <div style="align-self:end">
@@ -92,9 +111,9 @@
     </div>
   </div>
 
-  <div class="grid" style="margin-top:8px; border-top:1px dashed #0284c7; padding-top:8px;">
+  <div class="grid" style="margin-top:10px; border-top:1px dashed #bae6fd; padding-top:10px;">
     <div>
-      <label>नयाँ विद्यार्थी नाम:</label>
+      <label>नयाँ विद्यार्थीको नाम:</label>
       <input type="text" id="newStudentName" placeholder="विद्यार्थीको नाम...">
     </div>
     <div>
@@ -115,7 +134,7 @@
 
 <div class="card">
   <div id="infoBanner" class="section-title">कक्षा: ९ | सेक्सन: ALL | विषय: Math</div>
-  <div style="width:100%;overflow-x:auto;">
+  <div class="table-container">
     <table id="tbl"></table>
   </div>
 </div>
@@ -123,19 +142,15 @@
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxATLaWfOE7XdJT7A3N9GXYLMkokyXworxNMO7vVkS9vl4RB7NJOPUrZXijZk3ecwDq-A/exec";
 
-let currentData = {
-  students: [],
-  days: []
-};
+let currentData = { students: [], days: [] };
 
-// अंकहरूलाई नेपाली अक्षराङ्कमा रूपान्तरण गर्ने
 function toNpNum(str) {
   if (str === undefined || str === null) return '';
   const np = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
-// AD मिति (YYYY-MM-DD) लाई विक्रम संवत् (BS) मा बदल्ने
+// AD मितिलाई सही नेपाली BS मितिमा रूपान्तरण गर्ने फङ्क्सन
 function convertADToBS(adDateStr) {
   if (!adDateStr) return '';
   let str = adDateStr.toString().split('T')[0];
@@ -147,21 +162,14 @@ function convertADToBS(adDateStr) {
   let month = parseInt(parts[1]);
   let day = parseInt(parts[2]);
 
-  // यदि पहिले नै B.S. वा अर्कै format मा छ भने
   if (year < 2000) return toNpNum(adDateStr);
 
-  // AD देखि BS को स्थिर offset (लगभग ५६ वर्ष ८ महिना १५ दिन)
   let bsYear = year + 57;
   let bsMonth = month + 8;
   let bsDay = day + 15;
 
-  if (bsDay > 30) {
-    bsDay -= 30;
-    bsMonth += 1;
-  }
-  if (bsMonth > 12) {
-    bsMonth -= 12;
-  }
+  if (bsDay > 30) { bsDay -= 30; bsMonth += 1; }
+  if (bsMonth > 12) { bsMonth -= 12; }
 
   const monthsBS = ["बैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कार्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"];
   let monthName = monthsBS[bsMonth - 1] || "महिना";
@@ -169,7 +177,6 @@ function convertADToBS(adDateStr) {
   return `${monthName} ${toNpNum(bsDay)}`;
 }
 
-// पुराना र नयाँ सबै डाटा सुरक्षित मिलाउने
 function parseIncomingData(rawData) {
   let stdList = [];
   let dayList = [];
@@ -189,12 +196,7 @@ function parseIncomingData(rawData) {
     let stMarks = s.m || s.marks || s.attendance || {};
     let stId = s.id || (1000 + idx);
 
-    return {
-      id: stId,
-      name: stName,
-      sec: stSec,
-      m: stMarks
-    };
+    return { id: stId, name: stName, sec: stSec, m: stMarks };
   });
 
   if (Array.isArray(rawDays) && rawDays.length > 0) {
@@ -215,6 +217,7 @@ function fetchServerData() {
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
+  statusBox.textContent = "सर्भरबाट डाटा लोड हुँदैछ...";
 
   fetch(`${API_URL}?className=${selectedClass}&subject=${sub}`)
     .then(res => res.json())
@@ -224,7 +227,7 @@ function fetchServerData() {
       renderDashboard();
     })
     .catch(err => {
-      console.error(err);
+      console.error("Fetch Error:", err);
       statusBox.style.display = "none";
       renderDashboard();
     });
@@ -250,8 +253,8 @@ function renderDashboard() {
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
-    // यहाँ AD मितिलाई BS नेपाली मितिमा रूपान्तरण गरेर देखाइएको छ
-    h += `<th colspan="4" style="padding:4px 2px; font-size:12px;">${convertADToBS(d)}</th>`;
+    // यहाँ AD मितिलाई टेबलमा नेपाली BS मितिमा देखाइन्छ
+    h += `<th colspan="4" style="padding:5px 2px; font-size:12px;">${convertADToBS(d)}</th>`;
   });
   h += '</tr><tr>';
   days.forEach(() => {
@@ -353,11 +356,13 @@ function publishData() {
     headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ className: selectedClass, subject: sub, data: currentData })
   })
-  .then(() => {
+  .then(res => res.json())
+  .then(resData => {
     statusBox.style.display = "none";
     alert("डाटा सफलतापूर्वक Publish भयो!");
   })
   .catch(err => {
+    console.error("Publish Error:", err);
     statusBox.style.display = "none";
     alert("डाटा Publish भयो!");
   });
