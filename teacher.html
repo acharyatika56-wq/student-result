@@ -5,65 +5,307 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teacher Entry Panel</title>
 
+  <!-- jsPDF & autoTable Libraries for PDF Export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
   <style>
-    *{box-sizing:border-box}
-    body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f1f5f9;color:#0f172a;padding:8px}
-    
-    .app-header{background:linear-gradient(135deg, #1e3a8a, #3b82f6);color:white;padding:12px 16px;border-radius:10px;margin-bottom:10px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
-    .app-title{margin:0;font-size:18px;font-weight:700}
-    .card{background:white;border-radius:10px;padding:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);width:100%}
-    
-    .rule-info-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px}
-    .rule-item{display:inline-flex;align-items:center;gap:4px;font-weight:600}
-    .rule-badge{display:inline-block;padding:2px 5px;border-radius:4px;color:white;font-weight:700;font-size:10px}
-    .bg-green{background:#16a34a}
-    .bg-red{background:#dc2626}
-    .bg-gray{background:#64748b}
+    :root {
+      --primary: #1e40af;
+      --primary-dark: #1e3a8a;
+      --accent: #3b82f6;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --border-color: #cbd5e1;
+      
+      --success: #16a34a;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #edf2f7;
+      color: var(--text-main);
+      padding: 12px;
+    }
+
+    /* Header */
+    .app-header {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      color: white;
+      padding: 14px 20px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .app-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    /* Card Box */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+      width: 100%;
+    }
+
+    /* Rule Info Box */
+    .rule-info-box {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+    }
+    .rule-item { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+    .rule-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      color: white;
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .bg-green { background: var(--success); }
+    .bg-red { background: var(--danger); }
+    .bg-gray { background: #64748b; }
 
     /* Auto-fit Filter Grid */
-    .filter-box{background:#f0f9ff;border:1px solid #bae6fd;padding:10px;border-radius:10px;margin-bottom:10px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(100px, 1fr));gap:8px;align-items:end}
-    label{font-weight:600;font-size:11px;color:#0369a1;display:block;margin-bottom:3px;white-space:nowrap}
-    select,input{width:100%;padding:5px 4px;border:1px solid #cbd5e1;border-radius:6px;font-size:11px;outline:none;background:white}
-    
-    .bs-date-container{display:flex;gap:2px}
-    .bs-date-container select{padding:5px 2px;font-size:11px}
+    .filter-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+    label {
+      font-weight: 700;
+      font-size: 11px;
+      color: #334155;
+      display: block;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.2px;
+    }
+    select, input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 12px;
+      outline: none;
+      background: #f8fafc;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    select:focus, input:focus {
+      border-color: var(--accent);
+      background: #ffffff;
+    }
 
-    button{width:100%;padding:6px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:none;white-space:nowrap}
-    .btn-add{background:#0284c7;color:white}
-    .btn-pub{background:#16a34a;color:white}
-    
-    .btn-action{background:none;border:none;cursor:pointer;font-size:11px;padding:0 1px;margin-left:1px}
-    .btn-del-date{color:#f87171;cursor:pointer;margin-left:2px;font-size:10px;border:none;background:none}
+    .bs-date-container { display: flex; gap: 3px; }
+    .bs-date-container select { padding: 6px 3px; font-size: 11px; }
 
-    /* स्क्रोलबार हटाइएको Auto Fit Table Container */
-    .table-container{width:100%;overflow:hidden;border-radius:8px;border:1px solid #cbd5e1}
-    table{border-collapse:collapse;width:100%;background:white;table-layout:auto}
-    th,td{border:1px solid #cbd5e1;padding:3px 2px;text-align:center;font-size:10px;word-break:break-word}
-    
-    thead th{background:#1e3a8a;color:white;font-weight:700}
-    .sub-th{background:#2563eb!important;font-size:10px;padding:3px 1px;cursor:pointer;user-select:none}
-    .sub-th:hover{background:#1d4ed8!important}
-    .score-th{background:#0f766e!important;font-size:10px;padding:3px 1px}
-    
-    /* Sticky हटाएर चौडाइ अनुसार फिट हुने Name Column */
-    .student-name-td{background:#ffffff;color:#0f172a;text-align:left;padding:3px 5px;font-weight:700;font-size:11px;border-right:2px solid #cbd5e1}
-    th:first-child{background:#1e3a8a;color:#ffffff;text-align:center;padding:3px 5px;font-weight:700;border-right:2px solid #cbd5e1}
+    /* Modern Attractive Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.12); }
+    .btn:active { transform: translateY(0); }
 
-    .cell{font-size:11px;user-select:none;font-weight:bold;cursor:pointer;padding:2px 1px}
-    .green{background:#f0fdf4;color:#16a34a}
-    .red{background:#fef2f2;color:#dc2626}
-    .score-cell{background:#e0f2fe;font-weight:bold;color:#0369a1;font-size:10px;padding:2px 1px}
+    .btn-add { background: linear-gradient(135deg, #0284c7, #0369a1); color: white; }
+    .btn-pub { background: linear-gradient(135deg, #16a34a, #15803d); color: white; }
+    .btn-pdf { background: linear-gradient(135deg, #ea580c, #c2410c); color: white; }
     
-    .sec-tag{font-size:8px;color:#64748b;font-weight:normal;margin-left:2px}
+    .btn-action {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 10px;
+      padding: 2px 4px;
+      margin-left: 2px;
+      transition: background 0.2s;
+    }
+    .btn-action:hover { background: #e2e8f0; }
 
-    #loadingStatus{text-align:center;padding:8px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:8px;display:none;font-size:11px}
+    /* Delete Date Icon UI (Improved Cross) */
+    .btn-del-date {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: none;
+      cursor: pointer;
+      margin-left: 4px;
+      font-size: 10px;
+      font-weight: bold;
+      line-height: 1;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-del-date:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    /* Table Container & Table Styling */
+    .table-container {
+      width: 100%;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+      table-layout: auto;
+    }
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 4px 2px;
+      text-align: center;
+      font-size: 11px;
+      word-break: break-word;
+    }
+    
+    thead th {
+      background: var(--primary-dark);
+      color: white;
+      font-weight: 700;
+      padding: 6px 2px;
+    }
+    .sub-th {
+      background: #2563eb !important;
+      font-size: 10px;
+      padding: 4px 1px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    .sub-th:hover { background: #1d4ed8 !important; }
+    .score-th { background: #0f766e !important; font-size: 10px; padding: 4px 1px; }
+    
+    .student-name-td {
+      background: #ffffff;
+      color: #0f172a;
+      text-align: left;
+      padding: 4px 6px;
+      font-weight: 700;
+      font-size: 11px;
+      border-right: 2px solid var(--border-color);
+    }
+
+    /* Improved Status Indicators (Tick & Red Cross Badges) */
+    .cell {
+      font-size: 12px;
+      user-select: none;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 4px 2px;
+      transition: background 0.15s;
+    }
+    .cell:hover { background: #f1f5f9; }
+
+    /* Beautiful Green Tick & Red Cross Badges */
+    .mark-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .icon-tick {
+      background: #dcfce7;
+      color: #15803d;
+      border: 1px solid #86efac;
+    }
+    .icon-cross {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
+    }
+    .icon-dash {
+      color: #94a3b8;
+    }
+
+    .score-cell {
+      background: #f0f9ff;
+      font-weight: 800;
+      color: #0284c7;
+      font-size: 11px;
+      padding: 4px 2px;
+    }
+    
+    .sec-tag { font-size: 9px; color: #64748b; font-weight: 500; margin-left: 2px; }
+
+    #loadingStatus {
+      text-align: center;
+      padding: 8px;
+      font-weight: bold;
+      color: #0284c7;
+      background: #e0f2fe;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      display: none;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
 
 <div class="app-header">
   <h3 class="app-title">👨‍🏫 Teacher Entry Panel</h3>
+  <div style="font-size: 12px; opacity: 0.9;">Responsive & PDF Export Enabled</div>
 </div>
 
 <div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
@@ -116,14 +358,14 @@
     </div>
 
     <div>
-      <button class="btn-add" onclick="addNewDay()">+ मिति थप्नुहोस्</button>
+      <button class="btn btn-add" onclick="addNewDay()">➕ मिति थप्नुहोस्</button>
     </div>
   </div>
 
-  <div class="grid" style="margin-top:8px; border-top:1px dashed #bae6fd; padding-top:8px;">
+  <div class="grid" style="margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:10px;">
     <div>
       <label>नयाँ विद्यार्थी:</label>
-      <input type="text" id="newStudentName" placeholder="नाम...">
+      <input type="text" id="newStudentName" placeholder="विद्यार्थीको नाम...">
     </div>
     <div>
       <label>सेक्सन:</label>
@@ -133,16 +375,19 @@
       </select>
     </div>
     <div>
-      <button class="btn-add" onclick="addNewStudent()">+ विद्यार्थी थप्नुहोस्</button>
+      <button class="btn btn-add" onclick="addNewStudent()">👤 विद्यार्थी थप्नुहोस्</button>
     </div>
     <div>
-      <button class="btn-pub" onclick="publishData()">🌐 Publish</button>
+      <button class="btn btn-pub" onclick="publishData()">🌐 Publish</button>
+    </div>
+    <div>
+      <button class="btn btn-pdf" onclick="exportToPDF()">📄 Download PDF</button>
     </div>
   </div>
 </div>
 
 <div class="card">
-  <div id="infoBanner" style="font-weight:bold;margin-bottom:6px;font-size:12px"></div>
+  <div id="infoBanner" style="font-weight:700; margin-bottom:8px; font-size:13px; color: var(--primary-dark);"></div>
   <div class="table-container">
     <table id="tbl"></table>
   </div>
@@ -213,7 +458,7 @@ function renderDashboard() {
   let sub = document.getElementById('subject').value;
   let targetSec = document.getElementById('sectionFilter').value;
   
-  document.getElementById('infoBanner').textContent = `कक्षा: ${toNpNum(selectedClass)} | सेक्सन: ${targetSec} | विषय: ${sub}`;
+  document.getElementById('infoBanner').textContent = `📋 कक्षा: ${toNpNum(selectedClass)} | सेक्सन: ${targetSec} | विषय: ${sub}`;
 
   let students = currentData.students || [];
   let days = currentData.days || [];
@@ -227,7 +472,7 @@ function renderDashboard() {
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
-    h += `<th colspan="4">${toNpNum(d)} <button class="btn-del-date" onclick="deleteDate('${d}')">❌</button></th>`;
+    h += `<th colspan="4">${toNpNum(d)} <button class="btn-del-date" onclick="deleteDate('${d}')" title="हटाउनुहोस्">✕</button></th>`;
   });
   h += '</tr><tr>';
   
@@ -240,15 +485,15 @@ function renderDashboard() {
   h += '</tr></thead><tbody>';
 
   if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;">कुनै विवरण भेटिएन।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626; font-weight: bold;">कुनै विवरण भेटिएन।</td></tr>`;
   } else {
     filteredStudents.forEach((student) => {
       let stId = student.id;
       h += `<tr>
         <td class="student-name-td">
           ${student.name}<span class="sec-tag">(${student.sec || 'Darwin'})</span>
-          <button class="btn-action" onclick="editStudentDetails(${stId})">✏️</button>
-          <button class="btn-action" onclick="deleteStudent(${stId})">🗑️</button>
+          <button class="btn-action" onclick="editStudentDetails(${stId})" title="सम्पादन गर्नुहोस्">✏️</button>
+          <button class="btn-action" onclick="deleteStudent(${stId})" title="हटाउनुहोस्">🗑️</button>
         </td>`;
         
       let mData = student.m || {};
@@ -259,9 +504,9 @@ function renderDashboard() {
                     (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
                     (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
 
-        h += `<td class="cell ${getClass(dayData.hw)}" onclick="toggleMark(${stId}, '${d}', 'hw')">${getSym(dayData.hw)}</td>`;
-        h += `<td class="cell ${getClass(dayData.cw)}" onclick="toggleMark(${stId}, '${d}', 'cw')">${getSym(dayData.cw)}</td>`;
-        h += `<td class="cell ${getClass(dayData.dis)}" onclick="toggleMark(${stId}, '${d}', 'dis')">${getSym(dayData.dis)}</td>`;
+        h += `<td class="cell" onclick="toggleMark(${stId}, '${d}', 'hw')">${getFormattedBadge(dayData.hw)}</td>`;
+        h += `<td class="cell" onclick="toggleMark(${stId}, '${d}', 'cw')">${getFormattedBadge(dayData.cw)}</td>`;
+        h += `<td class="cell" onclick="toggleMark(${stId}, '${d}', 'dis')">${getFormattedBadge(dayData.dis)}</td>`;
         h += `<td class="score-cell">${toNpNum(score)}</td>`;
       });
       h += `</tr>`;
@@ -272,8 +517,16 @@ function renderDashboard() {
   document.getElementById('tbl').innerHTML = h;
 }
 
-function getSym(v) { return v === 1 ? '✓' : (v === -1 ? '✕' : '—'); }
-function getClass(v) { return v === 1 ? 'green' : (v === -1 ? 'red' : ''); }
+/* Formatted Badge Render function */
+function getFormattedBadge(v) {
+  if (v === 1) {
+    return `<span class="mark-icon icon-tick">✓</span>`;
+  } else if (v === -1) {
+    return `<span class="mark-icon icon-cross">✕</span>`;
+  } else {
+    return `<span class="icon-dash">—</span>`;
+  }
+}
 
 function toggleMark(stId, dateStr, type) {
   let st = currentData.students.find(s => s.id == stId);
@@ -382,6 +635,73 @@ function publishData() {
     statusBox.style.display = "none";
     alert("डाटा Publish भयो!");
   });
+}
+
+/* PDF Export Feature */
+function exportToPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+  let selectedClass = document.getElementById('classFilter').value;
+  let sub = document.getElementById('subject').value;
+  let targetSec = document.getElementById('sectionFilter').value;
+
+  doc.setFontSize(16);
+  doc.text(`Student Performance Report`, 14, 15);
+  doc.setFontSize(10);
+  doc.text(`Class: ${selectedClass} | Section: ${targetSec} | Subject: ${sub}`, 14, 22);
+
+  let days = currentData.days || [];
+  let students = currentData.students || [];
+
+  let filteredStudents = students.filter(s => {
+    if (targetSec === "ALL") return true;
+    return (s.sec || "Darwin").toString().toLowerCase() === targetSec.toLowerCase();
+  });
+
+  filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
+
+  // Prepare table headers
+  let headRows1 = [{ content: 'Student Name', rowSpan: 2 }];
+  let headRows2 = [];
+
+  days.forEach(d => {
+    headRows1.push({ content: d, colSpan: 4, styles: { halign: 'center' } });
+    headRows2.push('H', 'C', 'D', 'Score');
+  });
+
+  let bodyRows = [];
+  filteredStudents.forEach(st => {
+    let row = [`${st.name} (${st.sec || 'Darwin'})`];
+    let mData = st.m || {};
+
+    days.forEach(d => {
+      let dayData = mData[d] || { hw: 0, cw: 0, dis: 0 };
+      let score = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
+                  (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
+                  (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
+
+      row.push(
+        dayData.hw === 1 ? 'P' : (dayData.hw === -1 ? 'X' : '-'),
+        dayData.cw === 1 ? 'P' : (dayData.cw === -1 ? 'X' : '-'),
+        dayData.dis === 1 ? 'P' : (dayData.dis === -1 ? 'X' : '-'),
+        score
+      );
+    });
+    bodyRows.push(row);
+  });
+
+  doc.autoTable({
+    startY: 28,
+    head: [headRows1, headRows2],
+    body: bodyRows,
+    theme: 'grid',
+    styles: { fontSize: 8, cellPadding: 2, halign: 'center' },
+    headStyles: { fillColor: [30, 58, 138], textColor: 255, fontStyle: 'bold' },
+    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }
+  });
+
+  doc.save(`Class_${selectedClass}_${sub}_Report.pdf`);
 }
 
 window.onload = function() {
