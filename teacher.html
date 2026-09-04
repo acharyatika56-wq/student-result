@@ -104,7 +104,7 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 10px;
       align-items: end;
     }
@@ -135,7 +135,7 @@
     .bs-date-container { display: flex; gap: 3px; }
     .bs-date-container select { padding: 6px 3px; font-size: 11px; }
 
-    /* Modern Attractive Buttons */
+    /* Modern Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -316,7 +316,7 @@
 
 <div class="app-header">
   <h3 class="app-title">👨‍🏫 Teacher Entry Panel</h3>
-  <div style="font-size: 12px; opacity: 0.9;">Full Score Calculation Included</div>
+  <div style="font-size: 12px; opacity: 0.9;">1 Day, 1 Week & 1 Month Filter Integrated</div>
 </div>
 
 <div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
@@ -326,7 +326,7 @@
   <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>+५</span></div>
   <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>-२.५</span></div>
   <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>०</span></div>
-  <span style="margin-left:auto; color:#64748b; font-style:italic;">💡 हेडरको 'HW', 'CW', वा 'DIS' मा क्लिक गरेर पनि उक्त स्तम्भ (Column) भरि `✓` लगाउन सक्नुहुन्छ।</span>
+  <span style="margin-left:auto; color:#64748b; font-style:italic;">💡 हेडरको 'HW', 'CW', वा 'DIS' मा क्लिक गरेर पनि स्तम्भ भरि `✓` लगाउन सकिन्छ।</span>
 </div>
 
 <div class="filter-box">
@@ -359,9 +359,27 @@
         <option value="Computer Science">Computer Science</option>
       </select>
     </div>
+    
+    <!-- Range र Specific Date फिल्टर -->
+    <div>
+      <label>मिति फिल्टर (Date Range):</label>
+      <select id="dateRangeFilter" onchange="renderDashboard()">
+        <option value="ALL">सबै मितिहरू (All Dates)</option>
+        <option value="1DAY">आजको मिति (1 Day)</option>
+        <option value="1WEEK">पछिल्लो १ हप्ता (1 Week)</option>
+        <option value="1MONTH">पछिल्लो १ महिना (1 Month)</option>
+      </select>
+    </div>
 
     <div>
-      <label>नेपाली मिति (BS):</label>
+      <label>विशिष्ट मिति (Single Date):</label>
+      <select id="singleDateFilter" onchange="renderDashboard()">
+        <option value="ALL">सबै (All)</option>
+      </select>
+    </div>
+
+    <div>
+      <label>नेपाली मिति थप्नुहोस् (BS):</label>
       <div class="bs-date-container">
         <select id="bsYear"></select>
         <select id="bsMonth"></select>
@@ -455,6 +473,26 @@ function initNepaliDateDropdowns() {
   }
 }
 
+function updateDateFilterDropdown() {
+  let singleDateFilter = document.getElementById('singleDateFilter');
+  let currentVal = singleDateFilter.value;
+  singleDateFilter.innerHTML = '<option value="ALL">सबै (All)</option>';
+  
+  let days = currentData.days || [];
+  days.forEach(d => {
+    let opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = toNpNum(d);
+    singleDateFilter.appendChild(opt);
+  });
+
+  if (days.includes(currentVal)) {
+    singleDateFilter.value = currentVal;
+  } else {
+    singleDateFilter.value = "ALL";
+  }
+}
+
 function fetchServerData() {
   let selectedClass = document.getElementById('classFilter').value;
   let sub = document.getElementById('subject').value;
@@ -466,12 +504,36 @@ function fetchServerData() {
     .then(data => {
       statusBox.style.display = "none";
       currentData = data || { students: [], days: [] };
+      updateDateFilterDropdown();
       renderDashboard();
     })
     .catch(err => {
       statusBox.style.display = "none";
+      updateDateFilterDropdown();
       renderDashboard();
     });
+}
+
+function getFilteredDays() {
+  let days = currentData.days || [];
+  let rangeFilter = document.getElementById('dateRangeFilter').value;
+  let singleDate = document.getElementById('singleDateFilter').value;
+
+  // यदि Single Date छानिएको छ भने त्यसैलाई priority दिने
+  if (singleDate !== "ALL") {
+    return days.filter(d => d === singleDate);
+  }
+
+  // 1 DAY, 1 WEEK, 1 MONTH फिल्टरको लजिक
+  if (rangeFilter === "1DAY") {
+    return days.slice(0, 1); // सबैभन्दा नयाँ १ दिन
+  } else if (rangeFilter === "1WEEK") {
+    return days.slice(0, 7); // सबैभन्दा नयाँ ७ दिन (१ हप्ता)
+  } else if (rangeFilter === "1MONTH") {
+    return days.slice(0, 30); // सबैभन्दा नयाँ ३० दिन (१ महिना)
+  }
+
+  return days; // ALL
 }
 
 function renderDashboard() {
@@ -483,6 +545,7 @@ function renderDashboard() {
 
   let students = currentData.students || [];
   let days = currentData.days || [];
+  let displayDays = getFilteredDays();
 
   let filteredStudents = students.filter(s => {
     if (targetSec === "ALL") return true;
@@ -492,12 +555,12 @@ function renderDashboard() {
   filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
-  days.forEach(d => {
+  displayDays.forEach(d => {
     h += `<th colspan="4">${toNpNum(d)} <button class="btn-del-date" onclick="deleteDate('${d}')" title="हटाउनुहोस्">✕</button></th>`;
   });
   h += '<th rowspan="2" class="grand-total-th">जम्मा अंक<br>(Total)</th></tr><tr>';
   
-  days.forEach(d => {
+  displayDays.forEach(d => {
     h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'hw')" title="सबै HW मा Tick लगाउनुहोस्">HW</th>`;
     h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'cw')" title="सबै CW मा Tick लगाउनुहोस्">CW</th>`;
     h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'dis')" title="सबै DIS मा Tick लगाउनुहोस्">DIS</th>`;
@@ -520,6 +583,7 @@ function renderDashboard() {
       let mData = student.m || {};
       let grandTotalScore = 0;
 
+      // कुल जम्मा अंक सबै मितिको लागि हिसाब गर्ने
       days.forEach(d => {
         let rawDayData = mData[d] || {};
         let dayData = {
@@ -533,6 +597,20 @@ function renderDashboard() {
                        (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
 
         grandTotalScore += dayScore;
+      });
+
+      // फिल्टर गरिएका मिति अनुसार Table मा देखाउने
+      displayDays.forEach(d => {
+        let rawDayData = mData[d] || {};
+        let dayData = {
+          hw: rawDayData.hw !== undefined ? rawDayData.hw : 0,
+          cw: rawDayData.cw !== undefined ? rawDayData.cw : 0,
+          dis: rawDayData.dis !== undefined ? rawDayData.dis : 0
+        };
+
+        let dayScore = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
+                       (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
+                       (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
 
         h += `<td class="cell" onclick="toggleMark(${stId}, '${d}', 'hw')">${getFormattedBadge(dayData.hw)}</td>`;
         h += `<td class="cell" onclick="toggleMark(${stId}, '${d}', 'cw')">${getFormattedBadge(dayData.cw)}</td>`;
@@ -576,19 +654,21 @@ function toggleMark(stId, dateStr, type) {
 /* Auto-Tick All Feature (Value: 1 for ✓, 0 for —) */
 function tickAll(targetValue = 1) {
   let targetSec = document.getElementById('sectionFilter').value;
+  let targetDays = getFilteredDays();
+
   let filtered = currentData.students.filter(s => {
     if (targetSec === "ALL") return true;
     return (s.sec || "Darwin").toString().toLowerCase() === targetSec.toLowerCase();
   });
 
-  if (filtered.length === 0 || (currentData.days || []).length === 0) {
+  if (filtered.length === 0 || targetDays.length === 0) {
     alert("डाटा उपलब्ध छैन वा पहिले मिति थप्नुहोस्!");
     return;
   }
 
   filtered.forEach(st => {
     if (!st.m) st.m = {};
-    currentData.days.forEach(d => {
+    targetDays.forEach(d => {
       st.m[d] = { hw: targetValue, cw: targetValue, dis: targetValue };
     });
   });
@@ -644,10 +724,12 @@ function deleteStudent(studentId) {
 function deleteDate(dateStr) {
   if (confirm(`के तपाईं मिति "${toNpNum(dateStr)}" लाई हटाउन चाहनुहुन्छ?`)) {
     currentData.days = currentData.days.filter(d => d !== dateStr);
+    updateDateFilterDropdown();
     renderDashboard();
   }
 }
 
+/* नयाँ मिति अगाडि (First Column) थप्ने फंक्शन */
 function addNewDay() {
   let y = document.getElementById('bsYear').value;
   let m = document.getElementById('bsMonth').value;
@@ -656,11 +738,13 @@ function addNewDay() {
   let dateStr = `${y}-${m}-${d}`;
   
   if (!currentData.days.includes(dateStr)) {
-    currentData.days.push(dateStr);
+    // unshift ले नयाँ मितिलाई सबैभन्दा अगाडि थप्छ
+    currentData.days.unshift(dateStr);
     (currentData.students || []).forEach(st => {
       if (!st.m) st.m = {};
       st.m[dateStr] = { hw: 0, cw: 0, dis: 0 };
     });
+    updateDateFilterDropdown();
     renderDashboard();
   } else {
     alert("यो मिति पहिले नै थपिइसकेको छ!");
@@ -704,7 +788,7 @@ function publishData() {
   });
 }
 
-/* PDF Export Feature with Total Column */
+/* PDF Export Feature */
 function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -719,6 +803,7 @@ function exportToPDF() {
   doc.text(`Class: ${selectedClass} | Section: ${targetSec} | Subject: ${sub}`, 14, 22);
 
   let days = currentData.days || [];
+  let displayDays = getFilteredDays();
   let students = currentData.students || [];
 
   let filteredStudents = students.filter(s => {
@@ -731,7 +816,7 @@ function exportToPDF() {
   let headRows1 = [{ content: 'Student Name', rowSpan: 2 }];
   let headRows2 = [];
 
-  days.forEach(d => {
+  displayDays.forEach(d => {
     headRows1.push({ content: d, colSpan: 4, styles: { halign: 'center' } });
     headRows2.push('HW', 'CW', 'DIS', 'Score');
   });
@@ -749,8 +834,14 @@ function exportToPDF() {
       let score = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
                   (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
                   (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
-
       total += score;
+    });
+
+    displayDays.forEach(d => {
+      let dayData = mData[d] || { hw: 0, cw: 0, dis: 0 };
+      let score = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
+                  (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
+                  (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
 
       row.push(
         dayData.hw === 1 ? 'P' : (dayData.hw === -1 ? 'X' : '-'),
@@ -760,7 +851,7 @@ function exportToPDF() {
       );
     });
 
-    row.push(total); // Total Column in PDF
+    row.push(total);
     bodyRows.push(row);
   });
 
