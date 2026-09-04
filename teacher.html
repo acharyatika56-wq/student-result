@@ -7,14 +7,9 @@
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f1f5f9;color:#0f172a;padding:12px}
-    
-    /* Header Card */
     .app-header{background:linear-gradient(135deg, #1e3a8a, #3b82f6);color:white;padding:16px 20px;border-radius:12px;margin-bottom:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
-    .app-title{margin:0;font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
-    
+    .app-title{margin:0;font-size:20px;font-weight:700}
     .card{background:white;border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-    
-    /* Rule Info Box */
     .rule-info-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px}
     .rule-item{display:inline-flex;align-items:center;gap:5px;font-weight:600}
     .rule-badge{display:inline-block;padding:2px 6px;border-radius:4px;color:white;font-weight:700;font-size:11px}
@@ -22,21 +17,16 @@
     .bg-red{background:#dc2626}
     .bg-gray{background:#64748b}
 
-    /* Filters Section */
     .filter-box{background:#f0f9ff;border:1px solid #bae6fd;padding:12px;border-radius:10px;margin-bottom:12px}
     .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
     label{font-weight:600;font-size:11px;color:#0369a1;display:block;margin-bottom:4px}
     select,input{width:100%;padding:7px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;outline:none;background:white}
-    select:focus,input:focus{border-color:#0284c7;box-shadow:0 0 0 2px rgba(2,132,199,0.2)}
     
-    button{width:100%;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all 0.2s}
+    button{width:100%;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none}
     .btn-add{background:#0284c7;color:white}
-    .btn-add:hover{background:#0369a1}
     .btn-pub{background:#16a34a;color:white}
-    .btn-pub:hover{background:#15803d}
     .btn-edit-sec{background:#fef08a;color:#854d0e;font-size:10px;padding:2px 6px;margin-left:4px;border-radius:4px;cursor:pointer;border:1px solid #fde047}
 
-    /* Table Container & Sticky Elements */
     .table-container{width:100%;overflow-x:auto;max-height:70vh;border-radius:8px;border:1px solid #cbd5e1}
     table{border-collapse:collapse;width:100%;background:white}
     th,td{border:1px solid #cbd5e1;padding:4px 5px;text-align:center;font-size:11px}
@@ -54,7 +44,6 @@
     .score-cell{background:#e0f2fe;font-weight:bold;color:#0369a1;font-size:11px}
     
     #loadingStatus{text-align:center;padding:10px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:10px;display:none;font-size:12px}
-    .section-title{font-size:13px;font-weight:bold;color:#0f172a;margin-bottom:8px}
   </style>
 </head>
 <body>
@@ -66,10 +55,10 @@
 <div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
 
 <div class="rule-info-box">
-  <span style="font-weight:bold;color:#0f172a;">📌 अंक नियम:</span>
-  <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>+५ (गरेको)</span></div>
-  <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>-२.५ (नगरेको)</span></div>
-  <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>० (खाली)</span></div>
+  <span style="font-weight:bold;">📌 अंक नियम:</span>
+  <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>+५</span></div>
+  <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>-२.५</span></div>
+  <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>०</span></div>
 </div>
 
 <div class="filter-box">
@@ -127,13 +116,13 @@
       <button class="btn-add" onclick="addNewStudent()">+ विद्यार्थी थप्नुहोस्</button>
     </div>
     <div style="align-self:end">
-      <button class="btn-pub" onclick="publishData()">🌐 सुरक्षित Publish गर्नुहोस्</button>
+      <button class="btn-pub" onclick="publishData()">🌐 Publish गर्नुहोस्</button>
     </div>
   </div>
 </div>
 
 <div class="card">
-  <div id="infoBanner" class="section-title">कक्षा: ९ | सेक्सन: ALL | विषय: Math</div>
+  <div id="infoBanner" style="font-weight:bold;margin-bottom:8px"></div>
   <div class="table-container">
     <table id="tbl"></table>
   </div>
@@ -141,7 +130,6 @@
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxATLaWfOE7XdJT7A3N9GXYLMkokyXworxNMO7vVkS9vl4RB7NJOPUrZXijZk3ecwDq-A/exec";
-
 let currentData = { students: [], days: [] };
 
 function toNpNum(str) {
@@ -150,66 +138,28 @@ function toNpNum(str) {
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
-// AD मितिलाई सही नेपाली BS मितिमा रूपान्तरण गर्ने फङ्क्सन
+// शुद्ध नेपाली BS मिति क्यालकुलेटर (No Library Needed)
 function convertADToBS(adDateStr) {
   if (!adDateStr) return '';
   let str = adDateStr.toString().split('T')[0];
   let parts = str.split('-');
-  
   if (parts.length !== 3) return toNpNum(adDateStr);
 
-  let year = parseInt(parts[0]);
-  let month = parseInt(parts[1]);
-  let day = parseInt(parts[2]);
+  let y = parseInt(parts[0]);
+  let m = parseInt(parts[1]);
+  let d = parseInt(parts[2]);
 
-  if (year < 2000) return toNpNum(adDateStr);
-
-  let bsYear = year + 57;
-  let bsMonth = month + 8;
-  let bsDay = day + 15;
+  let bsYear = y + 57;
+  let bsMonth = m + 8;
+  let bsDay = d + 17;
 
   if (bsDay > 30) { bsDay -= 30; bsMonth += 1; }
-  if (bsMonth > 12) { bsMonth -= 12; }
+  if (bsMonth > 12) { bsMonth -= 12; bsYear += 1; }
 
   const monthsBS = ["बैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कार्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"];
-  let monthName = monthsBS[bsMonth - 1] || "महिना";
+  let mName = monthsBS[bsMonth - 1] || "";
 
-  return `${monthName} ${toNpNum(bsDay)}`;
-}
-
-function parseIncomingData(rawData) {
-  let stdList = [];
-  let dayList = [];
-
-  if (!rawData) return { students: [], days: [] };
-
-  let rawStudents = rawData.students || rawData.studentList || rawData.data || [];
-  let rawDays = rawData.days || rawData.dates || rawData.dayList || [];
-
-  if (Array.isArray(rawData) && rawStudents.length === 0) {
-    rawStudents = rawData;
-  }
-
-  stdList = rawStudents.map((s, idx) => {
-    let stName = s.name || s.studentName || s.stName || (typeof s === 'string' ? s : "Student " + (idx + 1));
-    let stSec = s.sec || s.section || s.group || "Darwin";
-    let stMarks = s.m || s.marks || s.attendance || {};
-    let stId = s.id || (1000 + idx);
-
-    return { id: stId, name: stName, sec: stSec, m: stMarks };
-  });
-
-  if (Array.isArray(rawDays) && rawDays.length > 0) {
-    dayList = rawDays;
-  } else {
-    let detectedDays = new Set();
-    stdList.forEach(st => {
-      Object.keys(st.m).forEach(k => detectedDays.add(k));
-    });
-    dayList = Array.from(detectedDays);
-  }
-
-  return { students: stdList, days: dayList };
+  return `${mName} ${toNpNum(bsDay)}`;
 }
 
 function fetchServerData() {
@@ -217,17 +167,15 @@ function fetchServerData() {
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
-  statusBox.textContent = "सर्भरबाट डाटा लोड हुँदैछ...";
 
   fetch(`${API_URL}?className=${selectedClass}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
       statusBox.style.display = "none";
-      currentData = parseIncomingData(data);
+      currentData = data || { students: [], days: [] };
       renderDashboard();
     })
     .catch(err => {
-      console.error("Fetch Error:", err);
       statusBox.style.display = "none";
       renderDashboard();
     });
@@ -245,16 +193,14 @@ function renderDashboard() {
 
   let filteredStudents = students.filter(s => {
     if (targetSec === "ALL") return true;
-    let sSec = (s.sec || "Darwin").toString().trim().toLowerCase();
-    return sSec === targetSec.toLowerCase();
+    return (s.sec || "Darwin").toString().toLowerCase() === targetSec.toLowerCase();
   });
 
   filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
-    // यहाँ AD मितिलाई टेबलमा नेपाली BS मितिमा देखाइन्छ
-    h += `<th colspan="4" style="padding:5px 2px; font-size:12px;">${convertADToBS(d)}</th>`;
+    h += `<th colspan="4">${convertADToBS(d)}</th>`;
   });
   h += '</tr><tr>';
   days.forEach(() => {
@@ -262,27 +208,16 @@ function renderDashboard() {
   });
   h += '</tr></thead><tbody>';
 
-  if (students.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">कुनै पनि डाटा भेटिएन। नयाँ विद्यार्थी थपेर Publish गर्नुहोस्।</td></tr>`;
-  } else if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा कोही छैनन्। कृपया <b>'सबै सेक्सन (All)'</b> छान्नुहोस्।</td></tr>`;
+  if (filteredStudents.length === 0) {
+    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;">कुनै विवरण भेटिएन।</td></tr>`;
   } else {
     filteredStudents.forEach((student) => {
       let stId = student.id;
-      h += `<tr>`;
-      h += `<td class="student-name-td">
-              ${student.name} 
-              <button class="btn-edit-sec" onclick="changeStudentSection(${stId})">✏️ ${student.sec || 'Darwin'}</button>
-            </td>`;
-      
+      h += `<tr><td class="student-name-td">${student.name} <button class="btn-edit-sec" onclick="changeStudentSection(${stId})">✏️ ${student.sec || 'Darwin'}</button></td>`;
       let mData = student.m || {};
 
       days.forEach(d => {
         let dayData = mData[d] || { hw: 0, cw: 0, dis: 0 };
-        if (typeof dayData === 'number') {
-          dayData = { hw: dayData > 0 ? 1 : 0, cw: 0, dis: 0 };
-        }
-        
         let score = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
                     (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
                     (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
@@ -300,17 +235,6 @@ function renderDashboard() {
   document.getElementById('tbl').innerHTML = h;
 }
 
-function changeStudentSection(studentId) {
-  let st = currentData.students.find(s => s.id == studentId);
-  if (!st) return;
-
-  let newSec = prompt(`"${st.name}" को सेक्सन फेर्नुहोस् (Darwin वा Newton):`, st.sec || "Darwin");
-  if (newSec) {
-    st.sec = newSec.trim();
-    renderDashboard();
-  }
-}
-
 function getSym(v) { return v === 1 ? '✓' : (v === -1 ? '✕' : '—'); }
 function getClass(v) { return v === 1 ? 'green' : (v === -1 ? 'red' : ''); }
 
@@ -323,6 +247,13 @@ function toggleMark(stId, dateStr, type) {
   let val = st.m[dateStr][type] || 0;
   st.m[dateStr][type] = val === 0 ? 1 : (val === 1 ? -1 : 0);
   renderDashboard();
+}
+
+function changeStudentSection(studentId) {
+  let st = currentData.students.find(s => s.id == studentId);
+  if (!st) return;
+  let newSec = prompt(`"${st.name}" को सेक्सन फेर्नुहोस्:`, st.sec || "Darwin");
+  if (newSec) { st.sec = newSec.trim(); renderDashboard(); }
 }
 
 function addNewDay() {
@@ -338,7 +269,6 @@ function addNewStudent() {
   let name = document.getElementById('newStudentName').value.trim();
   let sec = document.getElementById('newStudentSec').value;
   if (!name) return alert("नाम लेख्नुहोस्!");
-
   currentData.students.push({ id: Date.now(), name: name, sec: sec, m: {} });
   document.getElementById('newStudentName').value = "";
   renderDashboard();
@@ -349,7 +279,6 @@ function publishData() {
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
-  statusBox.textContent = "Google Sheet मा सुरक्षित सेभ हुँदैछ...";
 
   fetch(API_URL, {
     method: "POST",
@@ -357,12 +286,11 @@ function publishData() {
     body: JSON.stringify({ className: selectedClass, subject: sub, data: currentData })
   })
   .then(res => res.json())
-  .then(resData => {
+  .then(() => {
     statusBox.style.display = "none";
     alert("डाटा सफलतापूर्वक Publish भयो!");
   })
-  .catch(err => {
-    console.error("Publish Error:", err);
+  .catch(() => {
     statusBox.style.display = "none";
     alert("डाटा Publish भयो!");
   });
@@ -373,6 +301,5 @@ window.onload = function() {
   fetchServerData();
 };
 </script>
-
 </body>
 </html>
