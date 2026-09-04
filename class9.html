@@ -23,7 +23,6 @@
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
     .btn-pdf{background:#ea580c;font-size:12px;padding:6px}
 
-    /* Scroll नहुने बनाउन Table र Cell साइज सानो बनाइएको */
     table{border-collapse:collapse;width:100%;table-layout:auto;}
     th,td{border:1px solid #cbd5e1;padding:2px 3px;text-align:center;font-size:11px}
     th{background:#173f78;color:white;font-size:11px}
@@ -34,9 +33,7 @@
     .red{background:#fff1f1;color:red}
     .score-cell{background:#e2f8ff;font-weight:bold;color:#0369a1;font-size:11px}
     
-    /* कुल अंक (Total Score) Column को Style */
     .total-score-cell{background:#dcfce7;font-weight:bold;color:#15803d;font-size:12px;width:45px}
-
     .student-name-td{text-align:left;padding-left:5px;font-weight:bold;background:#f8fafc;font-size:11px;white-space:nowrap}
 
     #loadingStatus{text-align:center;padding:8px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:4px;margin-bottom:8px;display:none;font-size:12px}
@@ -102,7 +99,7 @@
 
 <div class="card">
   <div id="infoBanner" class="section-title">कक्षा: ९ | सेक्सन: Darwin | विषय: Math</div>
-  <div style="width: 100%;">
+  <div style="width: 100%; overflow-x: auto;">
     <table id="tbl"></table>
   </div>
 </div>
@@ -164,33 +161,40 @@ function renderAllStudentsReport() {
   let students = globalServerData.students || [];
   let days = globalServerData.days || [];
 
-  // बाई-डिफल्ट अन्तिम ७ दिन देखाउने जसले गर्दा स्क्रिन भित्र अट्छ
-  if (dateRange === 'last7' && days.length > 7) {
-    days = days.slice(-7);
+  // १. सेक्सन अनुसार Case-Insensitive Filter गर्छ
+  let filteredStudents = students.filter(s => {
+    let matchesSec = !s.sec || s.sec.toString().trim().toLowerCase() === targetSec.toString().trim().toLowerCase();
+    let matchesSearch = s.name.toLowerCase().includes(searchText);
+    return matchesSec && matchesSearch;
+  });
+
+  // २. विद्यार्थीहरूलाई वर्णानुक्रम (Alphabetical Order) अनुसार क्रमबद्ध गर्छ
+  filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
+
+  // ३. मितिको आधारमा Filter गर्छ (अन्तिम ७ दिन मात्र छान्दा)
+  let displayDays = [...days];
+  if (dateRange === 'last7' && displayDays.length > 7) {
+    displayDays = displayDays.slice(-7);
   }
-
-  students.sort((a, b) => a.name.localeCompare(b.name));
-
-  let filteredStudents = students.filter(s => s.name.toLowerCase().includes(searchText));
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   
-  days.forEach(d => {
+  displayDays.forEach(d => {
     h += `<th colspan="4" style="padding:2px;font-size:10px;">${d}</th>`;
   });
   
   h += '<th rowspan="2" style="background:#15803d;color:white;">जम्मा</th></tr><tr>';
   
-  days.forEach(() => {
+  displayDays.forEach(() => {
     h += `<th class="sub-th">H</th><th class="sub-th">C</th><th class="sub-th">D</th><th class="score-th">अंक</th>`;
   });
   
   h += '</tr></thead><tbody>';
 
-  if (days.length === 0) {
-    h += `<tr><td colspan="50" style="padding:10px; color:#666;">रेकर्ड छैन।</td></tr>`;
+  if (displayDays.length === 0) {
+    h += `<tr><td colspan="50" style="padding:10px; color:#666;">कुनै पनि दिनको रेकर्ड उपलब्ध छैन।</td></tr>`;
   } else if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="50" style="padding:10px; color:#666;">विद्यार्थी भेटिएन।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:10px; color:#666;">यो सेक्सनमा कुनै विद्यार्थी भेटिएन।</td></tr>`;
   } else {
     filteredStudents.forEach(student => {
       h += `<tr>`;
@@ -199,7 +203,7 @@ function renderAllStudentsReport() {
       let studentMarks = student.m || {};
       let grandTotalScore = 0;
 
-      days.forEach(d => {
+      displayDays.forEach(d => {
         let dayData = studentMarks[d] || {};
         let hw = dayData['hw'] || 0;
         let cw = dayData['cw'] || 0;
