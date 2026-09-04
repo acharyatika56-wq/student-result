@@ -23,6 +23,7 @@
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
     .btn-pub{background:#16a34a;margin-top:6px}
     .btn-add{background:#0284c7;margin-top:6px}
+    .btn-edit-sec{background:#eab308;color:#000;font-size:9px;padding:1px 4px;margin-left:4px;border-radius:3px;cursor:pointer}
 
     table{border-collapse:collapse;width:100%;table-layout:auto;}
     th,td{border:1px solid #cbd5e1;padding:2px 3px;text-align:center;font-size:11px}
@@ -88,7 +89,7 @@
       <input type="text" id="newStudentName" placeholder="नाम...">
     </div>
     <div>
-      <label>सेक्सन:</label>
+      <label>सेक्सन छान्नुहोस्:</label>
       <select id="newStudentSec">
         <option value="Darwin">Darwin</option>
         <option value="Newton">Newton</option>
@@ -118,6 +119,40 @@ let currentData = {
   students: [],
   days: []
 };
+
+// १. अङ्कलाई नेपालीमा फेर्ने फसन
+function toNepaliDigits(str) {
+  if (!str) return '';
+  const npDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+  return str.toString().replace(/[0-9]/g, function(w) {
+    return npDigits[parseInt(w)];
+  });
+}
+
+// २. AD मितिलाई BS नेपाली ढाँचामा देखाउने फसन
+function formatNepaliDate(dateStr) {
+  if (!dateStr) return '';
+  let parts = dateStr.split('-');
+  if (parts.length === 3) {
+    // सरल वर्ष र मिति रूपान्तरण (अनुमानित +57 वर्ष)
+    let y = parseInt(parts[0]);
+    let m = parseInt(parts[1]);
+    let d = parseInt(parts[2]);
+    
+    // मिति समायोजन
+    let bsYear = y + 57;
+    let bsMonth = m + 8;
+    if (bsMonth > 12) {
+      bsMonth -= 12;
+    }
+    
+    let monthNames = ["बैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कार्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"];
+    let monthNameStr = monthNames[bsMonth - 1] || `${bsMonth}`;
+
+    return `${monthNameStr} ${toNepaliDigits(d)}`;
+  }
+  return toNepaliDigits(dateStr);
+}
 
 function fetchServerData() {
   let sub = document.getElementById('subject').value;
@@ -159,23 +194,22 @@ function renderDashboard() {
   let targetSec = document.getElementById('sectionFilter').value;
   
   let banner = document.getElementById('infoBanner');
-  banner.textContent = `कक्षा: ${CLASS_NAME} | सेक्सन: ${targetSec} | विषय: ${sub}`;
+  banner.textContent = `कक्षा: ${toNepaliDigits(CLASS_NAME)} | सेक्सन: ${targetSec} | विषय: ${sub}`;
 
   let students = currentData.students || [];
   let days = currentData.days || [];
 
-  // १. Darwin र Newton सेक्सन मिलाउने (Case-Insensitive Match)
   let filteredStudents = students.filter(s => {
-    if (!s.sec) return true; // सेक्सन नभएका पुराना विद्यार्थी भए देखाउने
-    return s.sec.toString().trim().toLowerCase() === targetSec.toString().trim().toLowerCase();
+    let studentSec = s.sec ? s.sec.toString().trim().toLowerCase() : "darwin";
+    return studentSec === targetSec.toString().trim().toLowerCase();
   });
 
-  // २. विद्यार्थीहरूको नाम Alphabetical Order मा मिलाउने
   filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
-    h += `<th colspan="4" style="padding:2px;font-size:10px;">${d}</th>`;
+    let npDate = formatNepaliDate(d);
+    h += `<th colspan="4" style="padding:3px 2px;font-size:11px;">${npDate}</th>`;
   });
   h += '</tr><tr>';
   days.forEach(() => {
@@ -186,12 +220,15 @@ function renderDashboard() {
   if (students.length === 0) {
     h += `<tr><td colspan="50" style="padding:10px; color:#666;">यो विषयमा अझै डाटा छैन। तलबाट विद्यार्थी वा मिति थप्नुहोस्।</td></tr>`;
   } else if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="50" style="padding:10px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा कुनै विद्यार्थी भेटिएन। (नयाँ विद्यार्थी थप्दा सेक्सन ${targetSec} छान्नुहोस्)</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा कुनै विद्यार्थी भेटिएन। तलबाट नयाँ विद्यार्थी थप्नुहोस्।</td></tr>`;
   } else {
     filteredStudents.forEach((student) => {
       let stId = student.id;
       h += `<tr>`;
-      h += `<td class="student-name-td">${student.name}</td>`;
+      h += `<td class="student-name-td">
+              ${student.name} 
+              <button class="btn-edit-sec" onclick="changeStudentSection(${stId})" title="सेक्सन फेर्नुहोस्">✏️ ${student.sec || 'Darwin'}</button>
+            </td>`;
       
       let studentMarks = student.m || {};
 
@@ -202,7 +239,7 @@ function renderDashboard() {
         h += `<td class="cell ${getClass(dayData.hw)}" onclick="toggleMark(${stId}, '${d}', 'hw')">${getSymbol(dayData.hw)}</td>`;
         h += `<td class="cell ${getClass(dayData.cw)}" onclick="toggleMark(${stId}, '${d}', 'cw')">${getSymbol(dayData.cw)}</td>`;
         h += `<td class="cell ${getClass(dayData.dis)}" onclick="toggleMark(${stId}, '${d}', 'dis')">${getSymbol(dayData.dis)}</td>`;
-        h += `<td class="score-cell">${dailyScore}</td>`;
+        h += `<td class="score-cell">${toNepaliDigits(dailyScore)}</td>`;
       });
       h += `</tr>`;
     });
@@ -210,6 +247,22 @@ function renderDashboard() {
 
   h += '</tbody>';
   document.getElementById('tbl').innerHTML = h;
+}
+
+function changeStudentSection(studentId) {
+  let st = currentData.students.find(s => s.id == studentId);
+  if (!st) return;
+
+  let newSec = prompt(`"${st.name}" को नयाँ सेक्सन टाइप गर्नुहोस् (Darwin वा Newton):`, st.sec || "Darwin");
+  if (newSec) {
+    newSec = newSec.trim();
+    if (newSec.toLowerCase() === "darwin" || newSec.toLowerCase() === "newton") {
+      st.sec = newSec.charAt(0).toUpperCase() + newSec.slice(1).toLowerCase();
+      renderDashboard();
+    } else {
+      alert("कृपया केवल 'Darwin' वा 'Newton' मात्र लेख्नुहोस्।");
+    }
+  }
 }
 
 function getSymbol(val) {
@@ -270,10 +323,7 @@ function addNewStudent() {
   });
 
   document.getElementById('newStudentName').value = "";
-  
-  // यदि हाल छानिएको सेक्सन र नयाँ विद्यार्थीको सेक्सन फरक भए स्वतः स्विच गरिदिने
   document.getElementById('sectionFilter').value = sec;
-  
   renderDashboard();
 }
 
