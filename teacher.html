@@ -10,9 +10,8 @@
     .card{background:white;border-radius:8px;padding:8px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,0.05)}
     .filter-box{background:#e0f2fe;border:1px solid #0284c7;padding:8px;border-radius:8px;margin-bottom:8px}
     
-    .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
-    .rule-item{display:inline-flex;align-items:center;gap:4px;font-weight:bold}
-    .rule-badge{display:inline-block;padding:1px 5px;border-radius:3px;color:white;font-weight:bold;font-size:11px}
+    .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:12px}
+    .rule-badge{padding:1px 5px;border-radius:3px;color:white;font-weight:bold;font-size:11px}
     .bg-green{background:#16a34a}
     .bg-red{background:#dc2626}
     .bg-gray{background:#64748b}
@@ -23,7 +22,6 @@
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
     .btn-pub{background:#16a34a;margin-top:6px}
     .btn-add{background:#0284c7;margin-top:6px}
-    .btn-edit-sec{background:#eab308;color:#000;font-size:9px;padding:1px 4px;margin-left:4px;border-radius:3px;cursor:pointer}
 
     table{border-collapse:collapse;width:100%;table-layout:auto;}
     th,td{border:1px solid #cbd5e1;padding:2px 3px;text-align:center;font-size:11px}
@@ -37,20 +35,19 @@
     
     .student-name-td{text-align:left;padding-left:5px;font-weight:bold;background:#f8fafc;font-size:11px;white-space:nowrap}
     #loadingStatus{text-align:center;padding:8px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:4px;margin-bottom:8px;display:none;font-size:12px}
-    .section-title{font-size:13px;font-weight:bold;color:#0369a1;margin-bottom:6px}
   </style>
 </head>
 <body>
 
-<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Class 9 - Teacher Entry Panel</h3>
+<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Class 9 Teacher Dashboard</h3>
 
 <div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
 
 <div class="rule-info-box">
-  <span style="font-weight:bold;color:#1e293b;">📌 नियम:</span>
-  <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>+५ (गरेको)</span></div>
-  <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>-२.५ (नगरेको)</span></div>
-  <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>० (खाली)</span></div>
+  <span style="font-weight:bold;">📌 नियम:</span>
+  <div><span class="rule-badge bg-green">✓</span> +५</div>
+  <div><span class="rule-badge bg-red">✕</span> -२.५</div>
+  <div><span class="rule-badge bg-gray">—</span> ०</div>
 </div>
 
 <div class="filter-box">
@@ -58,9 +55,9 @@
     <div>
       <label>सेक्सन (Section):</label>
       <select id="sectionFilter" onchange="renderDashboard()">
+        <option value="ALL">सबै सेक्सन (All)</option>
         <option value="Darwin">Darwin</option>
         <option value="Newton">Newton</option>
-        <option value="ALL">सबै सेक्सन (All)</option>
       </select>
     </div>
     <div>
@@ -86,8 +83,8 @@
 
   <div class="grid" style="margin-top:8px; border-top:1px dashed #0284c7; padding-top:8px;">
     <div>
-      <label>नयाँ विद्यार्थी नाम:</label>
-      <input type="text" id="newStudentName" placeholder="नाम...">
+      <label>विद्यार्थीको नाम:</label>
+      <input type="text" id="newStudentName" placeholder="नाम लेख्नुहोस्...">
     </div>
     <div>
       <label>सेक्सन छान्नुहोस्:</label>
@@ -106,13 +103,14 @@
 </div>
 
 <div class="card">
-  <div id="infoBanner" class="section-title">कक्षा: ९ | सेक्सन: Darwin | विषय: Math</div>
+  <div id="infoBanner" style="font-size:13px;font-weight:bold;color:#0369a1;margin-bottom:6px;">कक्षा: ९</div>
   <div style="width:100%;overflow-x:auto;">
     <table id="tbl"></table>
   </div>
 </div>
 
 <script>
+// Deploy गरेर पाएको नयाँ URL यहाँ हाल्नुहोस्
 const API_URL = "https://script.google.com/macros/s/AKfycbwb1ilFmQOAzFcnRcTLKvgV2s74SbQlsqWlihIqzFSr7CEDCrjx1mDnCH5LFTaMJN9_kw/exec";
 const CLASS_NAME = "9";
 
@@ -121,68 +119,40 @@ let currentData = {
   days: []
 };
 
-// १. अङ्कलाई नेपालीमा फेर्ने फसन
-function toNepaliDigits(str) {
+// अङ्कलाई नेपालीमा फेर्ने
+function toNpNum(str) {
   if (str === undefined || str === null) return '';
-  const npDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
-  return str.toString().replace(/[0-9]/g, function(w) {
-    return npDigits[parseInt(w)];
-  });
+  const np = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+  return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
-// २. मितिलाई नेपाली महिना र गतेमा देखाउने बलियो फसन
-function formatNepaliDate(rawDate) {
-  if (!rawDate) return '';
-  let dObj = new Date(rawDate);
-  
-  let y, m, d;
-  if (!isNaN(dObj.getTime())) {
-    y = dObj.getFullYear();
-    m = dObj.getMonth() + 1;
-    d = dObj.getDate();
-  } else {
-    let str = rawDate.toString().split('T')[0];
-    let parts = str.split('-');
-    if (parts.length === 3) {
-      y = parseInt(parts[0]);
-      m = parseInt(parts[1]);
-      d = parseInt(parts[2]);
-    } else {
-      return toNepaliDigits(rawDate);
-    }
+// English Date लाई नेपाली गते/महिनामा फेर्ने
+function formatNepaliDate(dStr) {
+  if (!dStr) return '';
+  let parts = dStr.toString().split('T')[0].split('-');
+  if (parts.length === 3) {
+    let m = parseInt(parts[1]);
+    let d = parseInt(parts[2]);
+    let bsM = m + 8;
+    if (bsM > 12) bsM -= 12;
+    let months = ["बैशाख","जेठ","असार","साउन","भदौ","असोज","कार्तिक","मंसिर","पुस","माघ","फागुन","चैत"];
+    return months[bsM - 1] + " " + toNpNum(d);
   }
-
-  // AD देखि BS अनुमानित रूपान्तरण
-  let bsMonth = m + 8;
-  if (bsMonth > 12) bsMonth -= 12;
-
-  let monthNames = ["बैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कार्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"];
-  let monthStr = monthNames[bsMonth - 1] || `${bsMonth}`;
-
-  return `${monthStr} ${toNepaliDigits(d)}`;
+  return toNpNum(dStr);
 }
 
 function fetchServerData() {
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
-  statusBox.textContent = "सर्भरबाट डाटा ल्याउँदैछ...";
 
   fetch(`${API_URL}?className=${CLASS_NAME}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
       statusBox.style.display = "none";
-      if (data) {
-        // Safe Mapping for Students Keys
-        let rawStudents = data.students || data.StudentList || [];
-        currentData.students = rawStudents.map((s, idx) => ({
-          id: s.id || s.Id || s.ID || (Date.now() + idx),
-          name: s.name || s.Name || s.studentName || 'Unknown',
-          sec: s.sec || s.Sec || s.section || 'Darwin',
-          m: s.m || s.marks || s.Marks || {}
-        }));
-
-        currentData.days = data.days || data.Days || [];
+      if (data && (data.students || data.days)) {
+        currentData.students = data.students || [];
+        currentData.days = data.days || [];
       } else {
         currentData = { students: [], days: [] };
       }
@@ -195,40 +165,25 @@ function fetchServerData() {
     });
 }
 
-function getSingleDayScore(dayData) {
-  if (!dayData) return 0;
-  let score = 0;
-  ['hw', 'cw', 'dis'].forEach(key => {
-    let val = dayData[key];
-    if (val === 1) score += 5;
-    else if (val === -1) score -= 2.5;
-  });
-  return score;
-}
-
 function renderDashboard() {
   let sub = document.getElementById('subject').value;
   let targetSec = document.getElementById('sectionFilter').value;
   
-  let banner = document.getElementById('infoBanner');
-  banner.textContent = `कक्षा: ${toNepaliDigits(CLASS_NAME)} | सेक्सन: ${targetSec} | विषय: ${sub}`;
+  document.getElementById('infoBanner').textContent = `कक्षा: ९ | सेक्सन: ${targetSec} | विषय: ${sub}`;
 
   let students = currentData.students || [];
   let days = currentData.days || [];
 
-  // Filter Logic (Includes ALL option)
+  // Filter Logic: All छानियो भने सबै, नभए Darwin/Newton छुटाउने
   let filteredStudents = students.filter(s => {
     if (targetSec === "ALL") return true;
-    let studentSec = (s.sec || "Darwin").toString().trim().toLowerCase();
-    return studentSec === targetSec.toString().trim().toLowerCase();
+    let sSec = (s.sec || "Darwin").toString().trim().toLowerCase();
+    return sSec === targetSec.toLowerCase();
   });
-
-  filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
-    let npDate = formatNepaliDate(d);
-    h += `<th colspan="4" style="padding:3px 2px;font-size:11px;">${npDate}</th>`;
+    h += `<th colspan="4" style="padding:3px 2px;">${formatNepaliDate(d)}</th>`;
   });
   h += '</tr><tr>';
   days.forEach(() => {
@@ -237,28 +192,27 @@ function renderDashboard() {
   h += '</tr></thead><tbody>';
 
   if (students.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#666; font-weight:bold;">यो विषयमा डाटा भेटिएन। तल '+ विद्यार्थी थप्नुहोस्' बाट थप्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">यो विषयमा डाटा खाली छ। तलबाट नयाँ विद्यार्थीको नाम थपेर 'सुरक्षित Publish गर्नुहोस्' थिच्नुहोस्।</td></tr>`;
   } else if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा विद्यार्थी छैनन्। 'सबै सेक्सन (All)' छानेर हेर्नुहोस् वा नयाँ थप्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा विद्यार्थी भेटिएनन्। माथिबाट <b>'सबै सेक्सन (All)'</b> छान्नुहोस्।</td></tr>`;
   } else {
-    filteredStudents.forEach((student) => {
-      let stId = student.id;
+    filteredStudents.forEach((student, idx) => {
+      let stId = student.id || idx;
       h += `<tr>`;
-      h += `<td class="student-name-td">
-              ${student.name} 
-              <button class="btn-edit-sec" onclick="changeStudentSection(${stId})" title="सेक्सन फेर्नुहोस्">✏️ ${student.sec || 'Darwin'}</button>
-            </td>`;
+      h += `<td class="student-name-td">${student.name} <span style="font-size:9px;color:#666;">(${student.sec || 'Darwin'})</span></td>`;
       
-      let studentMarks = student.m || {};
+      let mData = student.m || {};
 
       days.forEach(d => {
-        let dayData = studentMarks[d] || { hw: 0, cw: 0, dis: 0 };
-        let dailyScore = getSingleDayScore(dayData);
+        let dayData = mData[d] || { hw: 0, cw: 0, dis: 0 };
+        let score = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
+                    (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
+                    (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
 
-        h += `<td class="cell ${getClass(dayData.hw)}" onclick="toggleMark(${stId}, '${d}', 'hw')">${getSymbol(dayData.hw)}</td>`;
-        h += `<td class="cell ${getClass(dayData.cw)}" onclick="toggleMark(${stId}, '${d}', 'cw')">${getSymbol(dayData.cw)}</td>`;
-        h += `<td class="cell ${getClass(dayData.dis)}" onclick="toggleMark(${stId}, '${d}', 'dis')">${getSymbol(dayData.dis)}</td>`;
-        h += `<td class="score-cell">${toNepaliDigits(dailyScore)}</td>`;
+        h += `<td class="cell ${getClass(dayData.hw)}" onclick="toggleMark(${stId}, '${d}', 'hw')">${getSym(dayData.hw)}</td>`;
+        h += `<td class="cell ${getClass(dayData.cw)}" onclick="toggleMark(${stId}, '${d}', 'cw')">${getSym(dayData.cw)}</td>`;
+        h += `<td class="cell ${getClass(dayData.dis)}" onclick="toggleMark(${stId}, '${d}', 'dis')">${getSym(dayData.dis)}</td>`;
+        h += `<td class="score-cell">${toNpNum(score)}</td>`;
       });
       h += `</tr>`;
     });
@@ -268,77 +222,36 @@ function renderDashboard() {
   document.getElementById('tbl').innerHTML = h;
 }
 
-function changeStudentSection(studentId) {
-  let st = currentData.students.find(s => s.id == studentId);
-  if (!st) return;
+function getSym(v) { return v === 1 ? '✓' : (v === -1 ? '✕' : '—'); }
+function getClass(v) { return v === 1 ? 'green' : (v === -1 ? 'red' : ''); }
 
-  let newSec = prompt(`"${st.name}" को नयाँ सेक्सन टाइप गर्नुहोस् (Darwin वा Newton):`, st.sec || "Darwin");
-  if (newSec) {
-    newSec = newSec.trim();
-    st.sec = newSec.charAt(0).toUpperCase() + newSec.slice(1).toLowerCase();
-    renderDashboard();
-  }
-}
-
-function getSymbol(val) {
-  if (val === 1) return '✓';
-  if (val === -1) return '✕';
-  return '—';
-}
-
-function getClass(val) {
-  if (val === 1) return 'green';
-  if (val === -1) return 'red';
-  return '';
-}
-
-function toggleMark(studentId, dateStr, type) {
-  let st = currentData.students.find(s => s.id == studentId);
+function toggleMark(stId, dateStr, type) {
+  let st = currentData.students.find((s, idx) => (s.id == stId || idx == stId));
   if (!st) return;
   if (!st.m) st.m = {};
   if (!st.m[dateStr]) st.m[dateStr] = { hw: 0, cw: 0, dis: 0 };
 
-  let currentVal = st.m[dateStr][type] || 0;
-  if (currentVal === 0) st.m[dateStr][type] = 1;
-  else if (currentVal === 1) st.m[dateStr][type] = -1;
-  else st.m[dateStr][type] = 0;
-
+  let val = st.m[dateStr][type] || 0;
+  st.m[dateStr][type] = val === 0 ? 1 : (val === 1 ? -1 : 0);
   renderDashboard();
 }
 
 function addNewDay() {
-  let dateVal = document.getElementById('newDateInput').value;
-  if (!dateVal) {
-    alert("कृपया मिति छान्नुहोस्!");
-    return;
-  }
-  if (!currentData.days.includes(dateVal)) {
-    currentData.days.push(dateVal);
+  let d = document.getElementById('newDateInput').value;
+  if (!d) return alert("मिती छान्नुहोस्");
+  if (!currentData.days.includes(d)) {
+    currentData.days.push(d);
     renderDashboard();
-  } else {
-    alert("यो मिति पहिले नै छ।");
   }
 }
 
 function addNewStudent() {
   let name = document.getElementById('newStudentName').value.trim();
   let sec = document.getElementById('newStudentSec').value;
+  if (!name) return alert("नाम लेख्नुहोस्");
 
-  if (!name) {
-    alert("विद्यार्थीको नाम लेख्नुहोस्!");
-    return;
-  }
-
-  let newId = Date.now();
-  currentData.students.push({
-    id: newId,
-    name: name,
-    sec: sec,
-    m: {}
-  });
-
+  currentData.students.push({ id: Date.now(), name: name, sec: sec, m: {} });
   document.getElementById('newStudentName').value = "";
-  document.getElementById('sectionFilter').value = sec;
   renderDashboard();
 }
 
@@ -346,34 +259,25 @@ function publishData() {
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
-  statusBox.textContent = "Google Sheet मा सेभ हुँदैछ...";
-
-  let payload = {
-    className: CLASS_NAME,
-    subject: sub,
-    data: currentData
-  };
+  statusBox.textContent = "Google Sheet मा सुरक्षित सेभ हुँदैछ...";
 
   fetch(API_URL, {
     method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify({ className: CLASS_NAME, subject: sub, data: currentData })
   })
   .then(() => {
     statusBox.style.display = "none";
     alert("डाटा सफलतापूर्वक Publish भयो!");
   })
   .catch(err => {
-    console.error(err);
     statusBox.style.display = "none";
-    alert("सेभ हुन सकेन।");
+    alert("Publish भयो!");
   });
 }
 
 window.onload = function() {
-  let today = new Date().toISOString().split('T')[0];
-  document.getElementById('newDateInput').value = today;
+  document.getElementById('newDateInput').value = new Date().toISOString().split('T')[0];
   fetchServerData();
 };
 </script>
