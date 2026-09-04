@@ -169,7 +169,6 @@ function renderAllStudentsReport() {
     days = days.slice(-7);
   }
 
- students = students.filter(s => !s.sec || (s.sec && s.sec.toString().trim().toLowerCase() === targetSec.toString().trim().toLowerCase()));
   students.sort((a, b) => a.name.localeCompare(b.name));
 
   let filteredStudents = students.filter(s => s.name.toLowerCase().includes(searchText));
