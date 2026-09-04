@@ -7,53 +7,57 @@
 
   <style>
     *{box-sizing:border-box}
-    body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f1f5f9;color:#0f172a;padding:12px}
-    .app-header{background:linear-gradient(135deg, #1e3a8a, #3b82f6);color:white;padding:16px 20px;border-radius:12px;margin-bottom:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
-    .app-title{margin:0;font-size:20px;font-weight:700}
-    .card{background:white;border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-    .rule-info-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px}
-    .rule-item{display:inline-flex;align-items:center;gap:5px;font-weight:600}
-    .rule-badge{display:inline-block;padding:2px 6px;border-radius:4px;color:white;font-weight:700;font-size:11px}
+    body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f1f5f9;color:#0f172a;padding:8px}
+    
+    .app-header{background:linear-gradient(135deg, #1e3a8a, #3b82f6);color:white;padding:12px 16px;border-radius:10px;margin-bottom:10px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
+    .app-title{margin:0;font-size:18px;font-weight:700}
+    .card{background:white;border-radius:10px;padding:8px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);width:100%}
+    
+    .rule-info-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px}
+    .rule-item{display:inline-flex;align-items:center;gap:4px;font-weight:600}
+    .rule-badge{display:inline-block;padding:2px 5px;border-radius:4px;color:white;font-weight:700;font-size:10px}
     .bg-green{background:#16a34a}
     .bg-red{background:#dc2626}
     .bg-gray{background:#64748b}
 
-    .filter-box{background:#f0f9ff;border:1px solid #bae6fd;padding:12px;border-radius:10px;margin-bottom:12px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-    label{font-weight:600;font-size:11px;color:#0369a1;display:block;margin-bottom:4px}
-    select,input{width:100%;padding:7px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;outline:none;background:white}
+    /* Auto-fit Filter Grid */
+    .filter-box{background:#f0f9ff;border:1px solid #bae6fd;padding:10px;border-radius:10px;margin-bottom:10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(100px, 1fr));gap:8px;align-items:end}
+    label{font-weight:600;font-size:11px;color:#0369a1;display:block;margin-bottom:3px;white-space:nowrap}
+    select,input{width:100%;padding:5px 4px;border:1px solid #cbd5e1;border-radius:6px;font-size:11px;outline:none;background:white}
     
-    .bs-date-container{display:flex;gap:4px}
-    .bs-date-container select{padding:6px 4px;font-size:11px}
+    .bs-date-container{display:flex;gap:2px}
+    .bs-date-container select{padding:5px 2px;font-size:11px}
 
-    button{width:100%;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none}
+    button{width:100%;padding:6px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:none;white-space:nowrap}
     .btn-add{background:#0284c7;color:white}
     .btn-pub{background:#16a34a;color:white}
     
-    /* सेक्सन मिलाउने बटनको नयाँ स्टाइल */
-    .btn-edit-sec{background:#e2e8f0;color:#1e293b;font-size:10px;padding:2px 6px;margin-left:6px;border-radius:4px;cursor:pointer;border:1px solid #cbd5e1;font-weight:600}
-    .btn-edit-sec:hover{background:#cbd5e1}
+    .btn-action{background:none;border:none;cursor:pointer;font-size:11px;padding:0 1px;margin-left:1px}
+    .btn-del-date{color:#f87171;cursor:pointer;margin-left:2px;font-size:10px;border:none;background:none}
 
-    .table-container{width:100%;overflow-x:auto;max-height:70vh;border-radius:8px;border:1px solid #cbd5e1}
-    table{border-collapse:collapse;width:100%;background:white}
-    th,td{border:1px solid #cbd5e1;padding:6px 5px;text-align:center;font-size:11px}
+    /* स्क्रोलबार हटाइएको Auto Fit Table Container */
+    .table-container{width:100%;overflow:hidden;border-radius:8px;border:1px solid #cbd5e1}
+    table{border-collapse:collapse;width:100%;background:white;table-layout:auto}
+    th,td{border:1px solid #cbd5e1;padding:3px 2px;text-align:center;font-size:10px;word-break:break-word}
     
-    thead th{position:sticky;top:0;z-index:10;background:#1e3a8a;color:white}
-    .sub-th{background:#2563eb!important;font-size:10px;padding:4px;width:26px;top:28px}
-    .score-th{background:#0f766e!important;font-size:10px;padding:4px;width:32px;top:28px}
+    thead th{background:#1e3a8a;color:white;font-weight:700}
+    .sub-th{background:#2563eb!important;font-size:10px;padding:3px 1px;cursor:pointer;user-select:none}
+    .sub-th:hover{background:#1d4ed8!important}
+    .score-th{background:#0f766e!important;font-size:10px;padding:3px 1px}
     
-    /* विद्यार्थीको नाम रहने कोलम (Sticky Name Column Design) */
-    .student-name-td{position:sticky;left:0;z-index:11;background:#ffffff;color:#0f172a;text-align:left;padding-left:10px;font-weight:600;white-space:nowrap;border-right:2px solid #cbd5e1}
-    
-    /* नामको माथिल्लो Header */
-    th:first-child{position:sticky;left:0;z-index:12;background:#1e3a8a;color:#ffffff;text-align:center;padding-left:10px;font-weight:700;border-right:2px solid #cbd5e1}
+    /* Sticky हटाएर चौडाइ अनुसार फिट हुने Name Column */
+    .student-name-td{background:#ffffff;color:#0f172a;text-align:left;padding:3px 5px;font-weight:700;font-size:11px;border-right:2px solid #cbd5e1}
+    th:first-child{background:#1e3a8a;color:#ffffff;text-align:center;padding:3px 5px;font-weight:700;border-right:2px solid #cbd5e1}
 
-    .cell{font-size:12px;min-width:24px;user-select:none;font-weight:bold;cursor:pointer}
+    .cell{font-size:11px;user-select:none;font-weight:bold;cursor:pointer;padding:2px 1px}
     .green{background:#f0fdf4;color:#16a34a}
     .red{background:#fef2f2;color:#dc2626}
-    .score-cell{background:#e0f2fe;font-weight:bold;color:#0369a1;font-size:11px}
+    .score-cell{background:#e0f2fe;font-weight:bold;color:#0369a1;font-size:10px;padding:2px 1px}
     
-    #loadingStatus{text-align:center;padding:10px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:10px;display:none;font-size:12px}
+    .sec-tag{font-size:8px;color:#64748b;font-weight:normal;margin-left:2px}
+
+    #loadingStatus{text-align:center;padding:8px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:8px;display:none;font-size:11px}
   </style>
 </head>
 <body>
@@ -84,7 +88,7 @@
     <div>
       <label>सेक्सन (Section):</label>
       <select id="sectionFilter" onchange="renderDashboard()">
-        <option value="ALL">सबै सेक्सन (All)</option>
+        <option value="ALL">सबै (All)</option>
         <option value="Darwin">Darwin</option>
         <option value="Newton">Newton</option>
       </select>
@@ -103,7 +107,7 @@
     </div>
 
     <div>
-      <label>नेपाली मिति छान्नुहोस् (BS):</label>
+      <label>नेपाली मिति (BS):</label>
       <div class="bs-date-container">
         <select id="bsYear"></select>
         <select id="bsMonth"></select>
@@ -111,34 +115,34 @@
       </div>
     </div>
 
-    <div style="align-self:end">
+    <div>
       <button class="btn-add" onclick="addNewDay()">+ मिति थप्नुहोस्</button>
     </div>
   </div>
 
-  <div class="grid" style="margin-top:10px; border-top:1px dashed #bae6fd; padding-top:10px;">
+  <div class="grid" style="margin-top:8px; border-top:1px dashed #bae6fd; padding-top:8px;">
     <div>
-      <label>नयाँ विद्यार्थीको नाम:</label>
-      <input type="text" id="newStudentName" placeholder="विद्यार्थीको नाम...">
+      <label>नयाँ विद्यार्थी:</label>
+      <input type="text" id="newStudentName" placeholder="नाम...">
     </div>
     <div>
-      <label>सेक्सन छान्नुहोस्:</label>
+      <label>सेक्सन:</label>
       <select id="newStudentSec">
         <option value="Darwin">Darwin</option>
         <option value="Newton">Newton</option>
       </select>
     </div>
-    <div style="align-self:end">
+    <div>
       <button class="btn-add" onclick="addNewStudent()">+ विद्यार्थी थप्नुहोस्</button>
     </div>
-    <div style="align-self:end">
-      <button class="btn-pub" onclick="publishData()">🌐 Publish गर्नुहोस्</button>
+    <div>
+      <button class="btn-pub" onclick="publishData()">🌐 Publish</button>
     </div>
   </div>
 </div>
 
 <div class="card">
-  <div id="infoBanner" style="font-weight:bold;margin-bottom:8px"></div>
+  <div id="infoBanner" style="font-weight:bold;margin-bottom:6px;font-size:12px"></div>
   <div class="table-container">
     <table id="tbl"></table>
   </div>
@@ -161,14 +165,11 @@ function initNepaliDateDropdowns() {
   let monthSel = document.getElementById('bsMonth');
   let daySel = document.getElementById('bsDay');
 
-  yearSel.innerHTML = '';
-  monthSel.innerHTML = '';
-  daySel.innerHTML = '';
+  yearSel.innerHTML = ''; monthSel.innerHTML = ''; daySel.innerHTML = '';
 
   for (let y = 2081; y <= 2085; y++) {
     let opt = document.createElement('option');
-    opt.value = y;
-    opt.textContent = toNpNum(y);
+    opt.value = y; opt.textContent = toNpNum(y);
     if (y === 2083) opt.selected = true;
     yearSel.appendChild(opt);
   }
@@ -183,8 +184,7 @@ function initNepaliDateDropdowns() {
   for (let d = 1; d <= 32; d++) {
     let opt = document.createElement('option');
     let val = String(d).padStart(2, '0');
-    opt.value = val;
-    opt.textContent = toNpNum(d);
+    opt.value = val; opt.textContent = toNpNum(d);
     daySel.appendChild(opt);
   }
 }
@@ -227,11 +227,15 @@ function renderDashboard() {
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
-    h += `<th colspan="4">${toNpNum(d)}</th>`;
+    h += `<th colspan="4">${toNpNum(d)} <button class="btn-del-date" onclick="deleteDate('${d}')">❌</button></th>`;
   });
   h += '</tr><tr>';
-  days.forEach(() => {
-    h += `<th class="sub-th">H</th><th class="sub-th">C</th><th class="sub-th">D</th><th class="score-th">अंक</th>`;
+  
+  days.forEach(d => {
+    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'hw')">H</th>`;
+    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'cw')">C</th>`;
+    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'dis')">D</th>`;
+    h += `<th class="score-th">अंक</th>`;
   });
   h += '</tr></thead><tbody>';
 
@@ -240,8 +244,13 @@ function renderDashboard() {
   } else {
     filteredStudents.forEach((student) => {
       let stId = student.id;
-      // विद्यार्थीको नाम सफा सेतो Background र Dark Text मा देखिने बनाइएको छ
-      h += `<tr><td class="student-name-td">${student.name} <button class="btn-edit-sec" onclick="changeStudentSection(${stId})">✏️ ${student.sec || 'Darwin'}</button></td>`;
+      h += `<tr>
+        <td class="student-name-td">
+          ${student.name}<span class="sec-tag">(${student.sec || 'Darwin'})</span>
+          <button class="btn-action" onclick="editStudentDetails(${stId})">✏️</button>
+          <button class="btn-action" onclick="deleteStudent(${stId})">🗑️</button>
+        </td>`;
+        
       let mData = student.m || {};
 
       days.forEach(d => {
@@ -277,11 +286,56 @@ function toggleMark(stId, dateStr, type) {
   renderDashboard();
 }
 
-function changeStudentSection(studentId) {
+function bulkToggleDate(dateStr, type) {
+  let targetSec = document.getElementById('sectionFilter').value;
+  let filtered = currentData.students.filter(s => {
+    if (targetSec === "ALL") return true;
+    return (s.sec || "Darwin").toString().toLowerCase() === targetSec.toLowerCase();
+  });
+
+  if(filtered.length === 0) return;
+
+  let allTicked = filtered.every(st => st.m && st.m[dateStr] && st.m[dateStr][type] === 1);
+  let nextVal = allTicked ? 0 : 1;
+
+  filtered.forEach(st => {
+    if (!st.m) st.m = {};
+    if (!st.m[dateStr]) st.m[dateStr] = { hw: 0, cw: 0, dis: 0 };
+    st.m[dateStr][type] = nextVal;
+  });
+
+  renderDashboard();
+}
+
+function editStudentDetails(studentId) {
   let st = currentData.students.find(s => s.id == studentId);
   if (!st) return;
-  let newSec = prompt(`"${st.name}" को सेक्सन फेर्नुहोस्:`, st.sec || "Darwin");
-  if (newSec) { st.sec = newSec.trim(); renderDashboard(); }
+  
+  let newName = prompt("विद्यार्थीको नयाँ नाम लेख्नुहोस्:", st.name);
+  if (newName !== null && newName.trim() !== "") {
+    st.name = newName.trim();
+    let newSec = prompt(`"${st.name}" को सेक्सन फेर्नुहोस् (Darwin/Newton):`, st.sec || "Darwin");
+    if (newSec !== null && newSec.trim() !== "") {
+      st.sec = newSec.trim();
+    }
+    renderDashboard();
+  }
+}
+
+function deleteStudent(studentId) {
+  let st = currentData.students.find(s => s.id == studentId);
+  if (!st) return;
+  if (confirm(`के तपाईं "${st.name}" लाई हटाउन चाहनुहुन्छ?`)) {
+    currentData.students = currentData.students.filter(s => s.id != studentId);
+    renderDashboard();
+  }
+}
+
+function deleteDate(dateStr) {
+  if (confirm(`के तपाईं मिति "${toNpNum(dateStr)}" लाई हटाउन चाहनुहुन्छ?`)) {
+    currentData.days = currentData.days.filter(d => d !== dateStr);
+    renderDashboard();
+  }
 }
 
 function addNewDay() {
