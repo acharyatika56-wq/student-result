@@ -42,9 +42,9 @@
 </head>
 <body>
 
-<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Teacher Entry Panel</h3>
+<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Teacher Entry Panel (Old Data Recovered)</h3>
 
-<div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
+<div id="loadingStatus">सर्भरबाट पुराना तथा नयाँ डाटा लोड हुँदैछ...</div>
 
 <div class="rule-info-box">
   <span style="font-weight:bold;color:#1e293b;">📌 अंक नियम:</span>
@@ -134,7 +134,6 @@ function toNpNum(str) {
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
-// मितिलाई अनिवार्य नेपालीमा परिणत गर्ने दरोगो Function
 function formatNepaliDate(dStr) {
   if (!dStr) return '';
   let str = dStr.toString().split('T')[0];
@@ -145,15 +144,59 @@ function formatNepaliDate(dStr) {
     let m = parseInt(parts[1]);
     let d = parseInt(parts[2]);
     
-    // AD मिति हो भने BS मा रुपान्तरण गर्ने सामान्य हिसाब
     if (y > 2000) {
       m = m + 8;
       if (m > 12) m -= 12;
     }
     let months = ["बैशाख","जेठ","असार","साउन","भदौ","असोज","कार्तिक","मंसिर","पुस","माघ","फागुन","चैत"];
-    return months[m - 1] + " " + toNpNum(d);
+    return months[(m - 1) % 12] + " " + toNpNum(d);
   }
   return toNpNum(dStr);
+}
+
+// पुरानो जस्तोसुकै डाटा Format लाई पनि मिलाउने Magic Function
+function parseIncomingData(rawData) {
+  let stdList = [];
+  let dayList = [];
+
+  if (!rawData) return { students: [], days: [] };
+
+  // यदि rawData नै Array वा Object छ भने
+  let rawStudents = rawData.students || rawData.studentList || rawData.data || [];
+  let rawDays = rawData.days || rawData.dates || rawData.dayList || [];
+
+  if (Array.isArray(rawData) && rawStudents.length === 0) {
+    rawStudents = rawData;
+  }
+
+  // पुराना विद्यार्थीको नामावली तान्ने
+  stdList = rawStudents.map((s, idx) => {
+    let stName = s.name || s.studentName || s.stName || (typeof s === 'string' ? s : "Student " + (idx + 1));
+    let stSec = s.sec || s.section || s.group || "Darwin";
+    let stMarks = s.m || s.marks || s.attendance || {};
+    let stId = s.id || (1000 + idx);
+
+    return {
+      id: stId,
+      name: stName,
+      sec: stSec,
+      m: stMarks
+    };
+  });
+
+  // पुराना मितिहरू तान्ने
+  if (Array.isArray(rawDays)) {
+    dayList = rawDays;
+  } else {
+    // यदि मितिहरू विद्यार्थीको Marks भित्र लुकेका छन् भने खोजेर निकाल्ने
+    let detectedDays = new Set();
+    stdList.forEach(st => {
+      Object.keys(st.m).forEach(k => detectedDays.add(k));
+    });
+    dayList = Array.from(detectedDays);
+  }
+
+  return { students: stdList, days: dayList };
 }
 
 function fetchServerData() {
@@ -166,17 +209,7 @@ function fetchServerData() {
     .then(res => res.json())
     .then(data => {
       statusBox.style.display = "none";
-      if (data && (data.students || data.days)) {
-        currentData.students = (data.students || []).map((s, idx) => ({
-          id: s.id || (Date.now() + idx),
-          name: s.name || s.studentName || "Unknown",
-          sec: s.sec || s.section || "Darwin",
-          m: s.m || s.marks || {}
-        }));
-        currentData.days = data.days || [];
-      } else {
-        currentData = { students: [], days: [] };
-      }
+      currentData = parseIncomingData(data);
       renderDashboard();
     })
     .catch(err => {
@@ -196,7 +229,6 @@ function renderDashboard() {
   let students = currentData.students || [];
   let days = currentData.days || [];
 
-  // सेक्सन अनुसार विद्यार्थी फिल्टर गर्ने
   let filteredStudents = students.filter(s => {
     if (targetSec === "ALL") return true;
     let sSec = (s.sec || "Darwin").toString().trim().toLowerCase();
@@ -216,9 +248,9 @@ function renderDashboard() {
   h += '</tr></thead><tbody>';
 
   if (students.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">यो कक्षा र विषयमा डाटा खाली छ। तलबाट नयाँ विद्यार्थी थपेर Publish गर्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">कुनै पनि डाटा भेटिएन। नयाँ विद्यार्थी थपेर Publish गर्नुहोस्।</td></tr>`;
   } else if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा विद्यार्थी भेटिएनन्। 'सबै सेक्सन (All)' छान्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा कोही छैनन्। कृपया <b>'सबै सेक्सन (All)'</b> छान्नुहोस्।</td></tr>`;
   } else {
     filteredStudents.forEach((student) => {
       let stId = student.id;
@@ -232,6 +264,11 @@ function renderDashboard() {
 
       days.forEach(d => {
         let dayData = mData[d] || { hw: 0, cw: 0, dis: 0 };
+        // यदि पुराना डाटामा सिधै नम्बर छ भने
+        if (typeof dayData === 'number') {
+          dayData = { hw: dayData > 0 ? 1 : 0, cw: 0, dis: 0 };
+        }
+        
         let score = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
                     (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
                     (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
