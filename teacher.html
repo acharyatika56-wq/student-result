@@ -242,4 +242,265 @@ function onClassChange() {
 function fetchServerData() {
   let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
-  let sec = document.getElementById('sectionFilter
+  let sec = document.getElementById('sectionFilter').value;
+  let targetSec = (sec === 'ALL') ? 'Darwin' : sec;
+  
+  let statusBox = document.getElementById('loadingStatus');
+  statusBox.style.display = "block";
+  statusBox.textContent = "सर्भरबाट डाटा लोड हुँदैछ...";
+
+  fetch(`${API_URL}?className=${cls}&section=${targetSec}&subject=${sub}`)
+    .then(res => res.json())
+    .then(data => {
+      statusBox.style.display = "none";
+      if (data && data.students && data.students.length > 0) {
+        currentStudents = data.students.map((s, i) => ({
+          id: s.id || ("st_" + i),
+          name: s.name,
+          sec: s.sec || targetSec
+        }));
+        currentDays = data.days || [];
+        currentMarks = {};
+        data.students.forEach((s, i) => {
+          let id = s.id || ("st_" + i);
+          currentMarks[id] = s.m || {};
+        });
+      } else {
+        currentStudents = [];
+        currentDays = [];
+        currentMarks = {};
+      }
+      sortDays();
+      sortStudentsAlphabetically();
+      render();
+    })
+    .catch(err => {
+      console.error(err);
+      statusBox.textContent = "डेटा लोड गर्न सकिएन। नेटवर्क कनेक्सन चेक गर्नुहोस्।";
+      setTimeout(() => { statusBox.style.display = "none"; }, 4000);
+      render();
+    });
+}
+
+function addStudent() {
+  let nameInput = document.getElementById('newStudent');
+  let name = nameInput.value.trim();
+  let sec = document.getElementById('newSec').value;
+  if (!name) return alert('कृपया विद्यार्थीको नाम लेख्नुहोस्!');
+
+  currentStudents.push({ id: "st_" + Date.now(), name: name, sec: sec });
+  nameInput.value = '';
+  
+  sortStudentsAlphabetically();
+  render();
+}
+
+function openEditModal(stId) {
+  let st = currentStudents.find(s => s.id === stId);
+  if (!st) return;
+  document.getElementById('editStId').value = st.id;
+  document.getElementById('editStName').value = st.name;
+  document.getElementById('editStSec').value = st.sec;
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+
+function saveEdit() {
+  let stId = document.getElementById('editStId').value;
+  let newName = document.getElementById('editStName').value.trim();
+  let newSec = document.getElementById('editStSec').value;
+  if (!newName) return alert("नाम खाली राख्न मिल्दैन।");
+
+  let st = currentStudents.find(s => s.id === stId);
+  if (st) { 
+    st.name = newName; 
+    st.sec = newSec; 
+    sortStudentsAlphabetically();
+    render(); 
+  }
+  closeEditModal();
+}
+
+function deleteStudent(stId) {
+  let st = currentStudents.find(s => s.id === stId);
+  if (!st) return;
+  if (confirm(`के तपाईं "${st.name}" लाई हटाउन चाहनुहुन्छ?`)) {
+    currentStudents = currentStudents.filter(s => s.id !== stId);
+    delete currentMarks[stId];
+    render();
+  }
+}
+
+function addDay() {
+  let m = document.getElementById('npMonth').value;
+  let d = document.getElementById('npDay').value;
+  let bsDate = `${m} ${d}`;
+
+  if (bsDate && !currentDays.includes(bsDate)) {
+    currentDays.push(bsDate);
+    sortDays();
+    render();
+  } else {
+    alert('यो मिति पहिले नै थपििसकेको छ वा खाली छ।');
+  }
+}
+
+function deleteDay(d) {
+  if (confirm(`के तपाईं "${d}" को सम्पूर्ण डाटा हटाउन चाहनुहुन्छ?`)) {
+    currentDays = currentDays.filter(item => item !== d);
+    Object.keys(currentMarks).forEach(stId => {
+      if (currentMarks[stId][d]) delete currentMarks[stId][d];
+    });
+    render();
+  }
+}
+
+function clickCell(stId, d, k) {
+  if (!currentMarks[stId]) currentMarks[stId] = {};
+  let a = currentMarks[stId][d] || {};
+  let v = a[k] || 0;
+  a[k] = v === 0 ? 1 : v === 1 ? -1 : 0;
+  currentMarks[stId][d] = a;
+  render();
+}
+
+function setColumnAllGreen(d, colKey) {
+  currentStudents.forEach(s => {
+    if (!currentMarks[s.id]) currentMarks[s.id] = {};
+    if (!currentMarks[s.id][d]) currentMarks[s.id][d] = {};
+    currentMarks[s.id][d][colKey] = 1;
+  });
+  render();
+}
+
+function calculateDayScore(stId, uptoDayIndex) {
+  let z = 0;
+  let studentMarks = currentMarks[stId] || {};
+  for (let i = 0; i <= uptoDayIndex; i++) {
+    let day = currentDays[i];
+    let a = studentMarks[day] || {};
+    Object.values(a).forEach(v => { z += (v === 1 ? 5 : v === -1 ? -2.5 : 0); });
+  }
+  return z;
+}
+
+function render() {
+  let filterSec = document.getElementById('sectionFilter').value;
+  
+  // 👉 Case-Insensitive Filter (Darwin / Newton Case Mismatch रोक्न)
+  let filteredStudents = currentStudents.filter(s => filterSec === 'ALL' || (!s.sec || s.sec.toString().trim().toLowerCase() === filterSec.toString().trim().toLowerCase()));
+
+  let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
+  currentDays.forEach(d => {
+    h += `<th colspan="4" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">${d} <button class="btn-del-day" onclick="deleteDay('${d}')">✕</button></th>`;
+  });
+  h += '</tr><tr>';
+  
+  currentDays.forEach(d => {
+    h += `<th class="sub-th">HW<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'hw')">✓</button></th>` +
+         `<th class="sub-th">CW<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'cw')">✓</button></th>` +
+         `<th class="sub-th">DIS<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'dis')">✓</button></th>` +
+         `<th class="score-th">अंक</th>`;
+  });
+  h += '</tr></thead><tbody>';
+
+  if (filteredStudents.length === 0) {
+    h += `<tr><td colspan="10" style="padding:20px; color:#666;">कुनै पनि विद्यार्थी भेटिएन। माथि विद्यार्थी थप्नुहोस् वा सही सेक्सन छान्नुहोस्।</td></tr>`;
+  } else {
+    filteredStudents.forEach((s, i) => {
+      h += `<tr>
+        <td>${i + 1}</td>
+        <td style="text-align:left;font-weight:bold;padding-left:8px">
+          ${s.name}
+          <span class="action-btn-group">
+            <button class="btn-icon btn-edit-icon" onclick="openEditModal('${s.id}')">✏️</button>
+            <button class="btn-icon btn-del-icon" onclick="deleteStudent('${s.id}')">🗑️</button>
+          </span>
+        </td>
+        <td>${s.sec}</td>`;
+      
+      currentDays.forEach((d, dayIndex) => {
+        let a = (currentMarks[s.id] && currentMarks[s.id][d]) ? currentMarks[s.id][d] : {};
+        ['hw', 'cw', 'dis'].forEach(k => {
+          let v = a[k] || 0;
+          h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}" onclick="clickCell('${s.id}','${d}','${k}')">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
+        });
+        h += `<td class="score-cell">${calculateDayScore(s.id, dayIndex)}</td>`;
+      });
+      h += `</tr>`;
+    });
+  }
+
+  h += '</tbody>';
+  document.getElementById('tbl').innerHTML = h;
+}
+
+function publishData() {
+  let cls = document.getElementById('className').value;
+  let sub = document.getElementById('subject').value;
+  let sec = document.getElementById('sectionFilter').value;
+  let targetSec = (sec === 'ALL') ? 'Darwin' : sec;
+
+  let formattedStudents = currentStudents.map(st => ({
+    id: st.id,
+    name: st.name,
+    sec: st.sec,
+    m: currentMarks[st.id] || {}
+  }));
+
+  let payload = {
+    className: cls,
+    section: targetSec,
+    subject: sub,
+    data: { students: formattedStudents, days: currentDays }
+  };
+
+  let statusBox = document.getElementById('loadingStatus');
+  statusBox.style.display = "block";
+  statusBox.textContent = "डेटा सर्भरमा सेभ गरिंदैछ...";
+
+  let iframe = document.createElement('iframe');
+  iframe.name = 'hidden_iframe';
+  iframe.style.display = 'none';
+  document.body.appendChild(iframe);
+
+  let form = document.createElement('form');
+  form.method = 'POST';
+  form.action = API_URL;
+  form.target = 'hidden_iframe';
+
+  let input = document.createElement('input');
+  input.type = 'hidden';
+  input.name = 'postData';
+  input.value = JSON.stringify(payload);
+  form.appendChild(input);
+
+  document.body.appendChild(form);
+  form.submit();
+
+  setTimeout(() => {
+    document.body.removeChild(form);
+    document.body.removeChild(iframe);
+    statusBox.style.display = "none";
+    alert(`Class ${cls} (${targetSec}) - ${sub} को डाटा सफलतापूर्वक सेभ भयो!`);
+  }, 1200);
+}
+
+function resetCurrentSubject() {
+  if (confirm('सावधानी: यसले यो विषयको सबै डाटा मेट्नेछ।')) {
+    currentMarks = {};
+    currentDays = [];
+    render();
+  }
+}
+
+window.onload = function() {
+  setupNepaliDays();
+  updateSubjectsList();
+  fetchServerData();
+};
+</script>
+
+</body>
+</html>
