@@ -199,7 +199,7 @@
     /* Table Container & Table Styling */
     .table-container {
       width: 100%;
-      overflow: hidden;
+      overflow-x: auto;
       border-radius: 8px;
       border: 1px solid var(--border-color);
     }
@@ -226,13 +226,14 @@
     .sub-th {
       background: #2563eb !important;
       font-size: 10px;
-      padding: 4px 1px;
+      padding: 4px 2px;
       cursor: pointer;
       user-select: none;
       transition: background 0.2s;
     }
     .sub-th:hover { background: #1d4ed8 !important; }
-    .score-th { background: #0f766e !important; font-size: 10px; padding: 4px 1px; }
+    .score-th { background: #0f766e !important; font-size: 10px; padding: 4px 2px; }
+    .grand-total-th { background: #047857 !important; font-size: 11px; padding: 6px 4px; color: white; }
     
     .student-name-td {
       background: #ffffff;
@@ -286,6 +287,15 @@
       font-size: 11px;
       padding: 4px 2px;
     }
+
+    .grand-total-cell {
+      background: #d1fae5;
+      font-weight: 900;
+      color: #065f46;
+      font-size: 12px;
+      padding: 4px 6px;
+      border-left: 2px solid #10b981;
+    }
     
     .sec-tag { font-size: 9px; color: #64748b; font-weight: 500; margin-left: 2px; }
 
@@ -306,7 +316,7 @@
 
 <div class="app-header">
   <h3 class="app-title">👨‍🏫 Teacher Entry Panel</h3>
-  <div style="font-size: 12px; opacity: 0.9;">Bulk Auto-Tick Enabled</div>
+  <div style="font-size: 12px; opacity: 0.9;">Full Score Calculation Included</div>
 </div>
 
 <div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
@@ -316,7 +326,7 @@
   <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>+५</span></div>
   <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>-२.५</span></div>
   <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>०</span></div>
-  <span style="margin-left:auto; color:#64748b; font-style:italic;">💡 हेडरको 'H', 'C', वा 'D' मा क्लिक गरेर पनि उक्त स्तम्भ (Column) भरि `✓` लगाउन सक्नुहुन्छ।</span>
+  <span style="margin-left:auto; color:#64748b; font-style:italic;">💡 हेडरको 'HW', 'CW', वा 'DIS' मा क्लिक गरेर पनि उक्त स्तम्भ (Column) भरि `✓` लगाउन सक्नुहुन्छ।</span>
 </div>
 
 <div class="filter-box">
@@ -366,10 +376,10 @@
 
   <div class="grid" style="margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:10px;">
     <div>
-      <button class="btn btn-tick-all" onclick="tickAll(1)" title="सबैमा ✓ लगाउनुहोस्">✅ सबैमा Tick (`✓`) लगाउनुहोस्</button>
+      <button class="btn btn-tick-all" onclick="tickAll(1)" title="सबैमा ✓ लगाउनुहोस्">✅ सबैमा Tick (`✓`)</button>
     </div>
     <div>
-      <button class="btn btn-clear-all" onclick="tickAll(0)" title="सबै खाली गर्नुहोस्">🔄 सबै Reset (`—`) गर्नुहोस्</button>
+      <button class="btn btn-clear-all" onclick="tickAll(0)" title="सबै खाली गर्नुहोस्">🔄 सबै Reset (`—`)</button>
     </div>
     <div>
       <button class="btn btn-pub" onclick="publishData()">🌐 Publish</button>
@@ -485,12 +495,12 @@ function renderDashboard() {
   days.forEach(d => {
     h += `<th colspan="4">${toNpNum(d)} <button class="btn-del-date" onclick="deleteDate('${d}')" title="हटाउनुहोस्">✕</button></th>`;
   });
-  h += '</tr><tr>';
+  h += '<th rowspan="2" class="grand-total-th">जम्मा अंक<br>(Total)</th></tr><tr>';
   
   days.forEach(d => {
-    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'hw')" title="यो मितिको सबै H मा Tick लगाउनुहोस्">H</th>`;
-    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'cw')" title="यो मितिको सबै C मा Tick लगाउनुहोस्">C</th>`;
-    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'dis')" title="यो मितिको सबै D मा Tick लगाउनुहोस्">D</th>`;
+    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'hw')" title="सबै HW मा Tick लगाउनुहोस्">HW</th>`;
+    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'cw')" title="सबै CW मा Tick लगाउनुहोस्">CW</th>`;
+    h += `<th class="sub-th" onclick="bulkToggleDate('${d}', 'dis')" title="सबै DIS मा Tick लगाउनुहोस्">DIS</th>`;
     h += `<th class="score-th">अंक</th>`;
   });
   h += '</tr></thead><tbody>';
@@ -508,6 +518,7 @@ function renderDashboard() {
         </td>`;
         
       let mData = student.m || {};
+      let grandTotalScore = 0;
 
       days.forEach(d => {
         let rawDayData = mData[d] || {};
@@ -517,15 +528,20 @@ function renderDashboard() {
           dis: rawDayData.dis !== undefined ? rawDayData.dis : 0
         };
 
-        let score = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
-                    (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
-                    (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
+        let dayScore = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
+                       (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
+                       (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
+
+        grandTotalScore += dayScore;
 
         h += `<td class="cell" onclick="toggleMark(${stId}, '${d}', 'hw')">${getFormattedBadge(dayData.hw)}</td>`;
         h += `<td class="cell" onclick="toggleMark(${stId}, '${d}', 'cw')">${getFormattedBadge(dayData.cw)}</td>`;
         h += `<td class="cell" onclick="toggleMark(${stId}, '${d}', 'dis')">${getFormattedBadge(dayData.dis)}</td>`;
-        h += `<td class="score-cell">${toNpNum(score)}</td>`;
+        h += `<td class="score-cell">${toNpNum(dayScore)}</td>`;
       });
+
+      // अन्तिम जम्मा अंक (Grand Total Score Column)
+      h += `<td class="grand-total-cell">${toNpNum(grandTotalScore)}</td>`;
       h += `</tr>`;
     });
   }
@@ -688,7 +704,7 @@ function publishData() {
   });
 }
 
-/* PDF Export Feature */
+/* PDF Export Feature with Total Column */
 function exportToPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -717,13 +733,16 @@ function exportToPDF() {
 
   days.forEach(d => {
     headRows1.push({ content: d, colSpan: 4, styles: { halign: 'center' } });
-    headRows2.push('H', 'C', 'D', 'Score');
+    headRows2.push('HW', 'CW', 'DIS', 'Score');
   });
+
+  headRows1.push({ content: 'Total Score', rowSpan: 2, styles: { halign: 'center', fillColor: [4, 120, 87] } });
 
   let bodyRows = [];
   filteredStudents.forEach(st => {
     let row = [`${st.name} (${st.sec || 'Darwin'})`];
     let mData = st.m || {};
+    let total = 0;
 
     days.forEach(d => {
       let dayData = mData[d] || { hw: 0, cw: 0, dis: 0 };
@@ -731,13 +750,17 @@ function exportToPDF() {
                   (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
                   (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
 
+      total += score;
+
       row.push(
         dayData.hw === 1 ? 'P' : (dayData.hw === -1 ? 'X' : '-'),
         dayData.cw === 1 ? 'P' : (dayData.cw === -1 ? 'X' : '-'),
-        dayData.dis === 1 ? 'P' : (dayData.dis === -1 ? -2.5 : 0),
+        dayData.dis === 1 ? 'P' : (dayData.dis === -1 ? 'X' : '-'),
         score
       );
     });
+
+    row.push(total); // Total Column in PDF
     bodyRows.push(row);
   });
 
