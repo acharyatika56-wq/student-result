@@ -3,430 +3,179 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Teacher Dashboard - Refactored</title>
+  <title>Class 9 Teacher Dashboard</title>
   <style>
     *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:15px}
-    .card{background:white;border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
-    .add-box{background:#e0f2fe;border:2px solid #0284c7;padding:15px;border-radius:10px;margin-bottom:15px}
+    body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:8px}
+    .card{background:white;border-radius:8px;padding:8px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,0.05)}
+    .filter-box{background:#e0f2fe;border:1px solid #0284c7;padding:8px;border-radius:8px;margin-bottom:8px}
     
-    .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:10px 15px;margin-bottom:15px;display:flex;align-items:center;gap:15px;flex-wrap:wrap}
-    .rule-item{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:bold}
-    .rule-badge{display:inline-block;padding:2px 8px;border-radius:4px;color:white;font-weight:bold}
-    .bg-green{background:#16a34a}
-    .bg-red{background:#dc2626}
-    .bg-gray{background:#64748b}
-
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
-    label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}
-    input,select,button{width:100%;padding:9px;border:1px solid #ccc;border-radius:6px;font-size:14px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+    label{font-weight:bold;font-size:11px;display:block;margin-bottom:2px}
+    select,input,button{width:100%;padding:5px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px}
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
-    .btn-add{background:#0284c7;color:white;font-weight:bold}
-    .btn-pub{background:#159447;font-size:15px;padding:10px}
-    .btn-pdf{background:#ea580c;font-size:15px;padding:10px}
-    .danger{background:#c62828}
-    
-    .btn-col-green {
-      background: #16a34a; color: white; border: none; padding: 2px 6px;
-      font-size: 12px; border-radius: 4px; cursor: pointer; margin-top: 3px; font-weight: bold;
-    }
-    .btn-del-day {
-      background: #dc2626; color: white; border: none; padding: 1px 4px;
-      font-size: 10px; border-radius: 3px; cursor: pointer; margin: 2px auto 0; display: block;
-    }
-    .action-btn-group{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
-    .btn-icon{padding:2px 6px;font-size:11px;border-radius:4px;cursor:pointer;border:none;color:white}
-    .btn-edit-icon{background:#f59e0b}
-    .btn-del-icon{background:#ef4444}
-    
-    table{border-collapse:collapse;width:100%;min-width:650px}
-    th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}
-    th{background:#173f78;color:white}
-    .sub-th{background:#1e4c8a;font-size:11px;padding:4px;width:38px}
-    .score-th{background:#0d5257;font-size:11px;padding:4px;width:45px;color:#fff}
-    .cell{font-size:18px;cursor:pointer;min-width:35px;user-select:none}
-    .green{background:#effaf3;color:green}
-    .red{background:#fff1f1;color:red}
-    .score-cell{background:#e2f8ff;font-weight:bold;color:#0369a1;font-size:14px}
+    .btn-pub{background:#16a34a;margin-top:6px}
+    .btn-add{background:#0284c7;margin-top:6px}
 
-    .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:1000}
-    .modal-box{background:white;padding:20px;border-radius:8px;width:300px;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
-    #loadingStatus{text-align:center;padding:12px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:6px;margin-bottom:15px;display:none;}
-
-    @media print {
-      body { background: white; padding: 0; }
-      .add-box, .card.grid, .rule-info-box, .action-btn-group, .btn-col-green, .btn-del-day { display: none !important; }
-      .card { box-shadow: none; padding: 0; margin: 0; }
-    }
+    table{border-collapse:collapse;width:100%;table-layout:auto;}
+    th,td{border:1px solid #cbd5e1;padding:2px 3px;text-align:center;font-size:11px}
+    th{background:#173f78;color:white;font-size:11px}
+    .sub-th{background:#1e4c8a;font-size:9px;padding:2px;width:22px}
+    .cell{font-size:12px;min-width:20px;user-select:none;font-weight:bold;cursor:pointer}
+    .green{background:#dcfce7;color:#15803d}
+    .red{background:#fee2e2;color:#dc2626}
+    .score-cell{background:#e0f2fe;font-weight:bold;color:#0369a1;font-size:11px}
+    
+    .student-name-td{text-align:left;padding-left:5px;font-weight:bold;background:#f8fafc;font-size:11px;white-space:nowrap}
+    #loadingStatus{text-align:center;padding:6px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:4px;margin-bottom:8px;display:none;font-size:12px}
   </style>
 </head>
 <body>
 
-<h2>👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Panel)</h2>
+<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 शिक्षक ड्यासबोर्ड (Teacher Dashboard)</h3>
 
-<div id="loadingStatus">सर्भरबाट डेटा लोड हुँदैछ...</div>
+<div id="loadingStatus">डाटा लोडिङ हुँदैछ...</div>
 
-<div class="rule-info-box">
-  <span style="font-weight:bold;color:#1e293b;">📌 अंक मूल्याङ्कन नियम:</span>
-  <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>हरियो टिक = +५ अंक</span></div>
-  <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>रातो क्रस = -२.५ अंक</span></div>
-  <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>खाली = ० अंक</span></div>
-</div>
-
-<div class="add-box">
-  <h3 style="margin:0 0 10px 0;color:#0369a1;">➕ विद्यार्थी र नेपाली मिति थप्नुहोस्</h3>
+<div class="filter-box">
   <div class="grid">
     <div>
-      <label>विद्यार्थीको नाम:</label>
-      <input id="newStudent" placeholder="पूरा नाम लेख्नुहोस्...">
-    </div>
-    <div>
-      <label>सेक्सन:</label>
-      <select id="newSec">
+      <label>सेक्सन (Section):</label>
+      <select id="sectionFilter" onchange="renderDashboard()">
         <option value="Darwin">Darwin</option>
         <option value="Newton">Newton</option>
       </select>
     </div>
-    <div style="align-self:end">
-      <button class="btn-add" onclick="addStudent()">+ विद्यार्थी थप्नुहोस्</button>
-    </div>
-    
     <div>
-      <label>नेपाली मिति:</label>
-      <div style="display:flex; gap:4px;">
-        <select id="npYear"><option value="२०८३" selected>२०८३</option><option value="२०८४">२०८४</option></select>
-        <select id="npMonth">
-          <option value="बैशाख">बैशाख</option><option value="जेठ">जेठ</option><option value="असार">असार</option>
-          <option value="साउन">साउन</option><option value="भदौ" selected>भदौ</option><option value="असोज">असोज</option>
-          <option value="कात्तिक">कात्तिक</option><option value="मंसिर">मंसिर</option><option value="पुस">पुस</option><option value="माघ">माघ</option><option value="फागुन">फागुन</option><option value="चैत">चैत</option>
-        </select>
-        <select id="npDay"></select>
-      </div>
+      <label>विषय (Subject):</label>
+      <select id="subject" onchange="fetchServerData()">
+        <option value="Math">Math</option>
+        <option value="Science">Science</option>
+        <option value="Nepali">Nepali</option>
+        <option value="English">English</option>
+        <option value="Social Studies">Social Studies</option>
+        <option value="Opt.Math">Opt.Math</option>
+        <option value="Computer Science">Computer Science</option>
+      </select>
+    </div>
+    <div>
+      <label>नयाँ मिति थप्नुहोस्:</label>
+      <input type="date" id="newDateInput">
     </div>
     <div style="align-self:end">
-      <button class="btn-add" onclick="addDay()">+ मिति थप्नुहोस्</button>
+      <button class="btn-add" onclick="addNewDay()">+ मिति थप्नुहोस्</button>
     </div>
   </div>
-</div>
-
-<div class="card grid">
-  <div>
-    <label>कक्षा (Class):</label>
-    <select id="className" onchange="onClassChange()">
-      <option value="8">Class 8</option>
-      <option value="9" selected>Class 9</option>
-      <option value="10">Class 10</option>
-    </select>
-  </div>
-  <div>
-    <label>विषय (Subject):</label>
-    <select id="subject" onchange="fetchServerData()"></select>
-  </div>
-  <div>
-    <label>सेक्सन (Filter):</label>
-    <select id="sectionFilter" onchange="render()">
-      <option value="ALL">सबै (ALL)</option>
-      <option value="Darwin">Darwin</option>
-      <option value="Newton">Newton</option>
-    </select>
-  </div>
-  <div style="align-self:end">
-    <button class="btn-pub" onclick="publishData()">🌐 सुरक्षित Publish गर्नुहोस्</button>
-  </div>
-  <div style="align-self:end">
-    <button class="btn-pdf" onclick="window.print()">📥 PDF डाउनलोड</button>
-  </div>
-  <div style="align-self:end">
-    <button class="danger" onclick="resetCurrentSubject()">विषय खाली गर्नुहोस्</button>
-  </div>
-</div>
-
-<div class="card" style="overflow:auto">
-  <table id="tbl"></table>
-</div>
-
-<div id="editModal" class="modal-overlay">
-  <div class="modal-box">
-    <h3 style="margin-top:0">विद्यार्थी सच्याउनुहोस्</h3>
-    <input type="hidden" id="editStId">
-    <div style="margin-bottom:10px">
-      <label>नाम:</label>
-      <input id="editStName" type="text">
+  
+  <div class="grid" style="margin-top:6px;">
+    <div>
+      <input type="text" id="newStudentName" placeholder="विद्यार्थीको नाम...">
     </div>
-    <div style="margin-bottom:15px">
-      <label>सेक्सन:</label>
-      <select id="editStSec">
+    <div>
+      <select id="newStudentSec">
         <option value="Darwin">Darwin</option>
         <option value="Newton">Newton</option>
       </select>
     </div>
-    <div style="display:flex;gap:10px">
-      <button style="background:#159447" onclick="saveEdit()">Save</button>
-      <button style="background:#666" onclick="closeEditModal()">Cancel</button>
+    <div>
+      <button class="btn-add" onclick="addNewStudent()">+ विद्यार्थी थप्नुहोस्</button>
     </div>
+    <div>
+      <button class="btn-pub" onclick="publishData()">🌐 सुरक्षित Publish गर्नुहोस्</button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="width:100%;overflow-x:auto;">
+    <table id="tbl"></table>
   </div>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyiG7dAG9Aja2oPoqo8U4afxLmm9WSN34fXeqSOLor-ytkkb92CngGbiBDlxPNdwQ37Lw/exec";
+// यहाँ आफ्नो Google Apps Script को Web App URL राख्नुहोस्
+const API_URL = "https://script.google.com/macros/s/AKfycbwb1ilFmQOAzFcnRcTLKvgV2s74SbQlsqWlihIqzFSr7CEDCrjx1mDnCH5LFTaMJN9_kw/exec";
+const CLASS_NAME = "9";
 
-const SUBJECTS = {
-  "8": ["Math", "Science", "Nepali", "English-I", "English-II", "Social Studies", "Hamro Rapti"],
-  "9": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"],
-  "10": ["Math", "Science", "Nepali", "English", "Social Studies", "Opt.Math", "Computer Science"]
+// १. सुरुमै देखिने ५ जना नमुना विद्यार्थीहरू
+const DEFAULT_STUDENTS = [
+  { id: 1, name: "Aarav Sharma", sec: "Darwin", m: {} },
+  { id: 2, name: "Bipana Thapa", sec: "Darwin", m: {} },
+  { id: 3, name: "Bibek Poudel", sec: "Newton", m: {} },
+  { id: 4, name: "Diya Shrestha", sec: "Newton", m: {} },
+  { id: 5, name: "Kiran KC", sec: "Darwin", m: {} }
+];
+
+// आजको मिति तयार पार्ने
+const TODAY_DATE = new Date().toISOString().split('T')[0];
+
+let currentData = {
+  students: [...DEFAULT_STUDENTS],
+  days: [TODAY_DATE]
 };
 
-const nepaliDigits = ['०','१','२','३','४','५','६','७','८','९'];
-const monthOrder = { "बैशाख": 1, "जेठ": 2, "असार": 3, "साउन": 4, "भदौ": 5, "असोज": 6, "कात्तिक": 7, "मंसिर": 8, "पुस": 9, "माघ": 10, "फागुन": 11, "चैत": 12 };
-
-let currentStudents = [];
-let currentDays = [];
-let currentMarks = {};
-
-function setupNepaliDays() {
-  const daySelect = document.getElementById('npDay');
-  daySelect.innerHTML = '';
-  for (let d = 1; d <= 32; d++) {
-    let opt = document.createElement('option');
-    let nepNum = d.toString().split('').map(x => nepaliDigits[parseInt(x)]).join('');
-    opt.value = nepNum + ' गते';
-    opt.textContent = nepNum + ' गते';
-    daySelect.appendChild(opt);
-  }
-}
-
-function sortDays() {
-  if (!currentDays || currentDays.length === 0) return;
-  currentDays.sort((a, b) => {
-    let partsA = a.split(' ');
-    let partsB = b.split(' ');
-    let mNumA = monthOrder[partsA[0]] || 0;
-    let mNumB = monthOrder[partsB[0]] || 0;
-    if (mNumA !== mNumB) return mNumB - mNumA;
-
-    let getDayVal = (dayStr) => {
-      let numDigits = (dayStr.match(/[०-९]/g) || []).join('');
-      let engNum = '';
-      for(let char of numDigits) {
-        let idx = nepaliDigits.indexOf(char);
-        engNum += (idx !== -1 ? idx : '');
-      }
-      return parseInt(engNum) || 0;
-    };
-    return getDayVal(partsB[1]) - getDayVal(partsA[1]);
-  });
-}
-
-function sortStudentsAlphabetically() {
-  if (!currentStudents || currentStudents.length === 0) return;
-  currentStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
-}
-
-function updateSubjectsList() {
-  let cls = document.getElementById('className').value;
-  let subSelect = document.getElementById('subject');
-  subSelect.innerHTML = "";
-  (SUBJECTS[cls] || []).forEach(sub => {
-    let opt = document.createElement('option');
-    opt.value = sub;
-    opt.textContent = sub;
-    subSelect.appendChild(opt);
-  });
-}
-
-function onClassChange() {
-  updateSubjectsList();
-  fetchServerData();
-}
-
 function fetchServerData() {
-  let cls = document.getElementById('className').value;
   let sub = document.getElementById('subject').value;
-  let sec = document.getElementById('sectionFilter').value;
-  let targetSec = (sec === 'ALL') ? 'Darwin' : sec;
-  
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
-  statusBox.textContent = "सर्भरबाट डाटा लोड हुँदैछ...";
+  statusBox.textContent = "सर्भरबाट डाटा ल्याउँदैछ...";
 
-  fetch(`${API_URL}?className=${cls}&section=${targetSec}&subject=${sub}`)
+  fetch(`${API_URL}?className=${CLASS_NAME}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
       statusBox.style.display = "none";
       if (data && data.students && data.students.length > 0) {
-        currentStudents = data.students.map((s, i) => ({
-          id: s.id || ("st_" + i),
-          name: s.name,
-          sec: s.sec || targetSec
-        }));
-        currentDays = data.days || [];
-        currentMarks = {};
-        data.students.forEach((s, i) => {
-          let id = s.id || ("st_" + i);
-          currentMarks[id] = s.m || {};
-        });
+        currentData = data;
       } else {
-        currentStudents = [];
-        currentDays = [];
-        currentMarks = {};
+        // यदि सर्भरमा डाटा छैन भने नमुना विद्यार्थीहरू राख्ने
+        currentData = {
+          students: [...DEFAULT_STUDENTS],
+          days: [TODAY_DATE]
+        };
       }
-      sortDays();
-      sortStudentsAlphabetically();
-      render();
+      renderDashboard();
     })
     .catch(err => {
       console.error(err);
-      statusBox.textContent = "डेटा लोड गर्न सकिएन। नेटवर्क कनेक्सन चेक गर्नुहोस्।";
-      setTimeout(() => { statusBox.style.display = "none"; }, 4000);
-      render();
+      statusBox.style.display = "none";
+      renderDashboard();
     });
 }
 
-function addStudent() {
-  let nameInput = document.getElementById('newStudent');
-  let name = nameInput.value.trim();
-  let sec = document.getElementById('newSec').value;
-  if (!name) return alert('कृपया विद्यार्थीको नाम लेख्नुहोस्!');
+function renderDashboard() {
+  let targetSec = document.getElementById('sectionFilter').value;
+  let students = currentData.students || [];
+  let days = currentData.days || [];
 
-  currentStudents.push({ id: "st_" + Date.now(), name: name, sec: sec });
-  nameInput.value = '';
-  
-  sortStudentsAlphabetically();
-  render();
-}
+  // छानिएको सेक्सन अनुसार Filter गर्ने
+  let filteredStudents = students.filter(s => 
+    s.sec && s.sec.toString().trim().toLowerCase() === targetSec.toString().trim().toLowerCase()
+  );
 
-function openEditModal(stId) {
-  let st = currentStudents.find(s => s.id === stId);
-  if (!st) return;
-  document.getElementById('editStId').value = st.id;
-  document.getElementById('editStName').value = st.name;
-  document.getElementById('editStSec').value = st.sec;
-  document.getElementById('editModal').style.display = 'flex';
-}
-
-function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
-
-function saveEdit() {
-  let stId = document.getElementById('editStId').value;
-  let newName = document.getElementById('editStName').value.trim();
-  let newSec = document.getElementById('editStSec').value;
-  if (!newName) return alert("नाम खाली राख्न मिल्दैन।");
-
-  let st = currentStudents.find(s => s.id === stId);
-  if (st) { 
-    st.name = newName; 
-    st.sec = newSec; 
-    sortStudentsAlphabetically();
-    render(); 
-  }
-  closeEditModal();
-}
-
-function deleteStudent(stId) {
-  let st = currentStudents.find(s => s.id === stId);
-  if (!st) return;
-  if (confirm(`के तपाईं "${st.name}" लाई हटाउन चाहनुहुन्छ?`)) {
-    currentStudents = currentStudents.filter(s => s.id !== stId);
-    delete currentMarks[stId];
-    render();
-  }
-}
-
-function addDay() {
-  let m = document.getElementById('npMonth').value;
-  let d = document.getElementById('npDay').value;
-  let bsDate = `${m} ${d}`;
-
-  if (bsDate && !currentDays.includes(bsDate)) {
-    currentDays.push(bsDate);
-    sortDays();
-    render();
-  } else {
-    alert('यो मिति पहिले नै थपििसकेको छ वा खाली छ।');
-  }
-}
-
-function deleteDay(d) {
-  if (confirm(`के तपाईं "${d}" को सम्पूर्ण डाटा हटाउन चाहनुहुन्छ?`)) {
-    currentDays = currentDays.filter(item => item !== d);
-    Object.keys(currentMarks).forEach(stId => {
-      if (currentMarks[stId][d]) delete currentMarks[stId][d];
-    });
-    render();
-  }
-}
-
-function clickCell(stId, d, k) {
-  if (!currentMarks[stId]) currentMarks[stId] = {};
-  let a = currentMarks[stId][d] || {};
-  let v = a[k] || 0;
-  a[k] = v === 0 ? 1 : v === 1 ? -1 : 0;
-  currentMarks[stId][d] = a;
-  render();
-}
-
-function setColumnAllGreen(d, colKey) {
-  currentStudents.forEach(s => {
-    if (!currentMarks[s.id]) currentMarks[s.id] = {};
-    if (!currentMarks[s.id][d]) currentMarks[s.id][d] = {};
-    currentMarks[s.id][d][colKey] = 1;
-  });
-  render();
-}
-
-function calculateDayScore(stId, uptoDayIndex) {
-  let z = 0;
-  let studentMarks = currentMarks[stId] || {};
-  for (let i = 0; i <= uptoDayIndex; i++) {
-    let day = currentDays[i];
-    let a = studentMarks[day] || {};
-    Object.values(a).forEach(v => { z += (v === 1 ? 5 : v === -1 ? -2.5 : 0); });
-  }
-  return z;
-}
-
-function render() {
-  let filterSec = document.getElementById('sectionFilter').value;
-  
-  // 👉 Case-Insensitive Filter (Darwin / Newton Case Mismatch रोक्न)
-  let filteredStudents = currentStudents.filter(s => filterSec === 'ALL' || (!s.sec || s.sec.toString().trim().toLowerCase() === filterSec.toString().trim().toLowerCase()));
-
-  let h = '<thead><tr><th rowspan="2">क्र.सं.</th><th rowspan="2">विद्यार्थीको नाम</th><th rowspan="2">सेक्सन</th>';
-  currentDays.forEach(d => {
-    h += `<th colspan="4" style="border-bottom:1px solid #ffffff44;padding:6px;font-size:13px;">${d} <button class="btn-del-day" onclick="deleteDay('${d}')">✕</button></th>`;
+  let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
+  days.forEach(d => {
+    h += `<th colspan="3" style="padding:2px;font-size:10px;">${d}</th>`;
   });
   h += '</tr><tr>';
-  
-  currentDays.forEach(d => {
-    h += `<th class="sub-th">HW<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'hw')">✓</button></th>` +
-         `<th class="sub-th">CW<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'cw')">✓</button></th>` +
-         `<th class="sub-th">DIS<br><button class="btn-col-green" onclick="setColumnAllGreen('${d}', 'dis')">✓</button></th>` +
-         `<th class="score-th">अंक</th>`;
+  days.forEach(() => {
+    h += `<th class="sub-th">H</th><th class="sub-th">C</th><th class="sub-th">D</th>`;
   });
   h += '</tr></thead><tbody>';
 
   if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="10" style="padding:20px; color:#666;">कुनै पनि विद्यार्थी भेटिएन। माथि विद्यार्थी थप्नुहोस् वा सही सेक्सन छान्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:10px; color:#666;">यो सेक्सनमा कुनै विद्यार्थी भेटिएन। तलबाट नयाँ थप्नुहोस्।</td></tr>`;
   } else {
-    filteredStudents.forEach((s, i) => {
-      h += `<tr>
-        <td>${i + 1}</td>
-        <td style="text-align:left;font-weight:bold;padding-left:8px">
-          ${s.name}
-          <span class="action-btn-group">
-            <button class="btn-icon btn-edit-icon" onclick="openEditModal('${s.id}')">✏️</button>
-            <button class="btn-icon btn-del-icon" onclick="deleteStudent('${s.id}')">🗑️</button>
-          </span>
-        </td>
-        <td>${s.sec}</td>`;
+    filteredStudents.forEach(student => {
+      h += `<tr>`;
+      h += `<td class="student-name-td">${student.name}</td>`;
       
-      currentDays.forEach((d, dayIndex) => {
-        let a = (currentMarks[s.id] && currentMarks[s.id][d]) ? currentMarks[s.id][d] : {};
-        ['hw', 'cw', 'dis'].forEach(k => {
-          let v = a[k] || 0;
-          h += `<td class="cell ${v == 1 ? 'green' : v == -1 ? 'red' : ''}" onclick="clickCell('${s.id}','${d}','${k}')">${v == 1 ? '✓' : v == -1 ? '✕' : '—'}</td>`;
-        });
-        h += `<td class="score-cell">${calculateDayScore(s.id, dayIndex)}</td>`;
+      let studentMarks = student.m || {};
+
+      days.forEach(d => {
+        let dayData = studentMarks[d] || { hw: 0, cw: 0, dis: 0 };
+        
+        h += `<td class="cell ${getClass(dayData.hw)}" onclick="toggleMark(${student.id}, '${d}', 'hw')">${getSymbol(dayData.hw)}</td>`;
+        h += `<td class="cell ${getClass(dayData.cw)}" onclick="toggleMark(${student.id}, '${d}', 'cw')">${getSymbol(dayData.cw)}</td>`;
+        h += `<td class="cell ${getClass(dayData.dis)}" onclick="toggleMark(${student.id}, '${d}', 'dis')">${getSymbol(dayData.dis)}</td>`;
       });
       h += `</tr>`;
     });
@@ -436,68 +185,100 @@ function render() {
   document.getElementById('tbl').innerHTML = h;
 }
 
-function publishData() {
-  let cls = document.getElementById('className').value;
-  let sub = document.getElementById('subject').value;
-  let sec = document.getElementById('sectionFilter').value;
-  let targetSec = (sec === 'ALL') ? 'Darwin' : sec;
-
-  let formattedStudents = currentStudents.map(st => ({
-    id: st.id,
-    name: st.name,
-    sec: st.sec,
-    m: currentMarks[st.id] || {}
-  }));
-
-  let payload = {
-    className: cls,
-    section: targetSec,
-    subject: sub,
-    data: { students: formattedStudents, days: currentDays }
-  };
-
-  let statusBox = document.getElementById('loadingStatus');
-  statusBox.style.display = "block";
-  statusBox.textContent = "डेटा सर्भरमा सेभ गरिंदैछ...";
-
-  let iframe = document.createElement('iframe');
-  iframe.name = 'hidden_iframe';
-  iframe.style.display = 'none';
-  document.body.appendChild(iframe);
-
-  let form = document.createElement('form');
-  form.method = 'POST';
-  form.action = API_URL;
-  form.target = 'hidden_iframe';
-
-  let input = document.createElement('input');
-  input.type = 'hidden';
-  input.name = 'postData';
-  input.value = JSON.stringify(payload);
-  form.appendChild(input);
-
-  document.body.appendChild(form);
-  form.submit();
-
-  setTimeout(() => {
-    document.body.removeChild(form);
-    document.body.removeChild(iframe);
-    statusBox.style.display = "none";
-    alert(`Class ${cls} (${targetSec}) - ${sub} को डाटा सफलतापूर्वक सेभ भयो!`);
-  }, 1200);
+function getSymbol(val) {
+  if (val === 1) return '✓';
+  if (val === -1) return '✕';
+  return '—';
 }
 
-function resetCurrentSubject() {
-  if (confirm('सावधानी: यसले यो विषयको सबै डाटा मेट्नेछ।')) {
-    currentMarks = {};
-    currentDays = [];
-    render();
+function getClass(val) {
+  if (val === 1) return 'green';
+  if (val === -1) return 'red';
+  return '';
+}
+
+function toggleMark(studentId, dateStr, type) {
+  let st = currentData.students.find(s => s.id === studentId);
+  if (!st) return;
+  if (!st.m) st.m = {};
+  if (!st.m[dateStr]) st.m[dateStr] = { hw: 0, cw: 0, dis: 0 };
+
+  let currentVal = st.m[dateStr][type] || 0;
+  // 0 (Empty) -> 1 (Right) -> -1 (Cross) -> 0
+  if (currentVal === 0) st.m[dateStr][type] = 1;
+  else if (currentVal === 1) st.m[dateStr][type] = -1;
+  else st.m[dateStr][type] = 0;
+
+  renderDashboard();
+}
+
+function addNewDay() {
+  let dateVal = document.getElementById('newDateInput').value;
+  if (!dateVal) {
+    alert("कृपया मिति छान्नुहोस्!");
+    return;
+  }
+  if (!currentData.days.includes(dateVal)) {
+    currentData.days.push(dateVal);
+    renderDashboard();
+  } else {
+    alert("यो मिति पहिले नै थपिसकिएको छ।");
   }
 }
 
+function addNewStudent() {
+  let name = document.getElementById('newStudentName').value.trim();
+  let sec = document.getElementById('newStudentSec').value;
+
+  if (!name) {
+    alert("कृपया विद्यार्थीको नाम लेख्नुहोस्!");
+    return;
+  }
+
+  let newId = Date.now();
+  currentData.students.push({
+    id: newId,
+    name: name,
+    sec: sec,
+    m: {}
+  });
+
+  document.getElementById('newStudentName').value = "";
+  renderDashboard();
+}
+
+function publishData() {
+  let sub = document.getElementById('subject').value;
+  let statusBox = document.getElementById('loadingStatus');
+  statusBox.style.display = "block";
+  statusBox.textContent = "सर्भरमा डाटा सेभ हुँदैछ...";
+
+  let payload = {
+    className: CLASS_NAME,
+    subject: sub,
+    data: currentData
+  };
+
+  fetch(API_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    statusBox.style.display = "none";
+    alert("डाटा सफलतापूर्वक Publish भयो!");
+  })
+  .catch(err => {
+    console.error(err);
+    statusBox.style.display = "none";
+    alert("सेभ गर्न सकिएन। पुर्नप्रयास गर्नुहोस्।");
+  });
+}
+
 window.onload = function() {
-  setupNepaliDays();
-  updateSubjectsList();
+  // आजको मिति Date Picker मा set गर्ने
+  document.getElementById('newDateInput').value = TODAY_DATE;
   fetchServerData();
 };
 </script>
