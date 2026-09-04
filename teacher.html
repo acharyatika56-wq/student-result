@@ -10,8 +10,9 @@
     .card{background:white;border-radius:8px;padding:8px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,0.05)}
     .filter-box{background:#e0f2fe;border:1px solid #0284c7;padding:8px;border-radius:8px;margin-bottom:8px}
     
-    .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;font-size:12px}
-    .rule-badge{padding:1px 5px;border-radius:3px;color:white;font-weight:bold;font-size:11px}
+    .rule-info-box{background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
+    .rule-item{display:inline-flex;align-items:center;gap:4px;font-weight:bold}
+    .rule-badge{display:inline-block;padding:1px 5px;border-radius:3px;color:white;font-weight:bold;font-size:11px}
     .bg-green{background:#16a34a}
     .bg-red{background:#dc2626}
     .bg-gray{background:#64748b}
@@ -22,6 +23,7 @@
     button{background:#1769aa;color:white;font-weight:bold;cursor:pointer;border:none}
     .btn-pub{background:#16a34a;margin-top:6px}
     .btn-add{background:#0284c7;margin-top:6px}
+    .btn-edit-sec{background:#eab308;color:#000;font-size:9px;padding:1px 4px;margin-left:4px;border-radius:3px;cursor:pointer}
 
     table{border-collapse:collapse;width:100%;table-layout:auto;}
     th,td{border:1px solid #cbd5e1;padding:2px 3px;text-align:center;font-size:11px}
@@ -35,6 +37,7 @@
     
     .student-name-td{text-align:left;padding-left:5px;font-weight:bold;background:#f8fafc;font-size:11px;white-space:nowrap}
     #loadingStatus{text-align:center;padding:8px;font-weight:bold;color:#0284c7;background:#e0f2fe;border-radius:4px;margin-bottom:8px;display:none;font-size:12px}
+    .section-title{font-size:13px;font-weight:bold;color:#0369a1;margin-bottom:6px}
   </style>
 </head>
 <body>
@@ -44,10 +47,10 @@
 <div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
 
 <div class="rule-info-box">
-  <span style="font-weight:bold;">📌 नियम:</span>
-  <div><span class="rule-badge bg-green">✓</span> +५</div>
-  <div><span class="rule-badge bg-red">✕</span> -२.५</div>
-  <div><span class="rule-badge bg-gray">—</span> ०</div>
+  <span style="font-weight:bold;color:#1e293b;">📌 अंक नियम:</span>
+  <div class="rule-item"><span class="rule-badge bg-green">✓</span><span>+५ (गरेको)</span></div>
+  <div class="rule-item"><span class="rule-badge bg-red">✕</span><span>-२.५ (नगरेको)</span></div>
+  <div class="rule-item"><span class="rule-badge bg-gray">—</span><span>० (खाली)</span></div>
 </div>
 
 <div class="filter-box">
@@ -91,8 +94,8 @@
 
   <div class="grid" style="margin-top:8px; border-top:1px dashed #0284c7; padding-top:8px;">
     <div>
-      <label>विद्यार्थीको नाम:</label>
-      <input type="text" id="newStudentName" placeholder="नाम लेख्नुहोस्...">
+      <label>नयाँ विद्यार्थी नाम:</label>
+      <input type="text" id="newStudentName" placeholder="विद्यार्थीको नाम...">
     </div>
     <div>
       <label>सेक्सन छान्नुहोस्:</label>
@@ -111,23 +114,19 @@
 </div>
 
 <div class="card">
-  <div id="infoBanner" style="font-size:13px;font-weight:bold;color:#0369a1;margin-bottom:6px;">कक्षा छान्नुहोस्</div>
+  <div id="infoBanner" class="section-title">कक्षा: ९ | सेक्सन: ALL | विषय: Math</div>
   <div style="width:100%;overflow-x:auto;">
     <table id="tbl"></table>
   </div>
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbybqQzgXaoeAJvZjDPiAX0yoZ2gJgWY1nCn9p6fmXXl4ug1jWL8nn-GN-Y9hm-rMaURrQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxATLaWfOE7XdJT7A3N9GXYLMkokyXworxNMO7vVkS9vl4RB7NJOPUrZXijZk3ecwDq-A/exec";
 
 let currentData = {
   students: [],
   days: []
 };
-
-function getSelectedClass() {
-  return document.getElementById('classFilter').value;
-}
 
 function toNpNum(str) {
   if (str === undefined || str === null) return '';
@@ -150,7 +149,7 @@ function formatNepaliDate(dStr) {
 }
 
 function fetchServerData() {
-  let selectedClass = getSelectedClass();
+  let selectedClass = document.getElementById('classFilter').value;
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
@@ -160,7 +159,12 @@ function fetchServerData() {
     .then(data => {
       statusBox.style.display = "none";
       if (data && (data.students || data.days)) {
-        currentData.students = data.students || [];
+        currentData.students = (data.students || []).map(s => ({
+          id: s.id || Date.now(),
+          name: s.name || "Unknown",
+          sec: s.sec || "Darwin",
+          m: s.m || {}
+        }));
         currentData.days = data.days || [];
       } else {
         currentData = { students: [], days: [] };
@@ -175,7 +179,7 @@ function fetchServerData() {
 }
 
 function renderDashboard() {
-  let selectedClass = getSelectedClass();
+  let selectedClass = document.getElementById('classFilter').value;
   let sub = document.getElementById('subject').value;
   let targetSec = document.getElementById('sectionFilter').value;
   
@@ -190,6 +194,8 @@ function renderDashboard() {
     return sSec === targetSec.toLowerCase();
   });
 
+  filteredStudents.sort((a, b) => a.name.localeCompare(b.name, 'ne'));
+
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
     h += `<th colspan="4" style="padding:3px 2px;">${formatNepaliDate(d)}</th>`;
@@ -198,17 +204,20 @@ function renderDashboard() {
   days.forEach(() => {
     h += `<th class="sub-th">H</th><th class="sub-th">C</th><th class="sub-th">D</th><th class="score-th">अंक</th>`;
   });
-  h += '</tr><thead><tbody>';
+  h += '</tr></thead><tbody>';
 
   if (students.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">यो कक्षा/विषयमा डाटा खाली छ। नयाँ विद्यार्थी थपेर 'Publish' गर्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">डाटा खाली छ। विद्यार्थी थपेर Publish गर्नुहोस्।</td></tr>`;
   } else if (filteredStudents.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा विद्यार्थी भेटिएनन्। माथिबाट <b>'सबै सेक्सन (All)'</b> छान्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा विद्यार्थी भेटिएनन्। 'सबै सेक्सन (All)' छान्नुहोस्।</td></tr>`;
   } else {
     filteredStudents.forEach((student, idx) => {
       let stId = student.id || idx;
       h += `<tr>`;
-      h += `<td class="student-name-td">${student.name} <span style="font-size:9px;color:#666;">(${student.sec || 'Darwin'})</span></td>`;
+      h += `<td class="student-name-td">
+              ${student.name} 
+              <button class="btn-edit-sec" onclick="changeStudentSection(${stId})">✏️ ${student.sec || 'Darwin'}</button>
+            </td>`;
       
       let mData = student.m || {};
 
@@ -231,11 +240,22 @@ function renderDashboard() {
   document.getElementById('tbl').innerHTML = h;
 }
 
+function changeStudentSection(studentId) {
+  let st = currentData.students.find(s => s.id == studentId);
+  if (!st) return;
+
+  let newSec = prompt(`"${st.name}" को सेक्सन फेर्नुहोस् (Darwin वा Newton):`, st.sec || "Darwin");
+  if (newSec) {
+    st.sec = newSec.trim();
+    renderDashboard();
+  }
+}
+
 function getSym(v) { return v === 1 ? '✓' : (v === -1 ? '✕' : '—'); }
 function getClass(v) { return v === 1 ? 'green' : (v === -1 ? 'red' : ''); }
 
 function toggleMark(stId, dateStr, type) {
-  let st = currentData.students.find((s, idx) => (s.id == stId || idx == stId));
+  let st = currentData.students.find(s => s.id == stId);
   if (!st) return;
   if (!st.m) st.m = {};
   if (!st.m[dateStr]) st.m[dateStr] = { hw: 0, cw: 0, dis: 0 };
@@ -247,7 +267,7 @@ function toggleMark(stId, dateStr, type) {
 
 function addNewDay() {
   let d = document.getElementById('newDateInput').value;
-  if (!d) return alert("मिति छान्नुहोस्");
+  if (!d) return alert("मिति छान्नुहोस्!");
   if (!currentData.days.includes(d)) {
     currentData.days.push(d);
     renderDashboard();
@@ -257,7 +277,7 @@ function addNewDay() {
 function addNewStudent() {
   let name = document.getElementById('newStudentName').value.trim();
   let sec = document.getElementById('newStudentSec').value;
-  if (!name) return alert("नाम लेख्नुहोस्");
+  if (!name) return alert("नाम लेख्नुहोस्!");
 
   currentData.students.push({ id: Date.now(), name: name, sec: sec, m: {} });
   document.getElementById('newStudentName').value = "";
@@ -265,7 +285,7 @@ function addNewStudent() {
 }
 
 function publishData() {
-  let selectedClass = getSelectedClass();
+  let selectedClass = document.getElementById('classFilter').value;
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
@@ -282,7 +302,7 @@ function publishData() {
   })
   .catch(err => {
     statusBox.style.display = "none";
-    alert("Publish भयो!");
+    alert("डाटा Publish भयो!");
   });
 }
 
