@@ -143,12 +143,19 @@ function toNpNum(str) {
 function convertADToBS(adDateStr) {
   if (!adDateStr) return '';
   try {
-    let cleanStr = adDateStr.toString().split('T')[0];
-    if (window.BikramSambat) {
-      let bs = new BikramSambat(cleanStr, 'AD');
-      let mName = bs.format('MMMM');
-      let dayNum = bs.format('D');
-      return `${mName} ${toNpNum(dayNum)}`;
+    let d = new Date(adDateStr);
+    if (!isNaN(d.getTime())) {
+      let year = d.getFullYear();
+      let month = String(d.getMonth() + 1).padStart(2, '0');
+      let day = String(d.getDate()).padStart(2, '0');
+      let formattedDate = `${year}-${month}-${day}`;
+
+      if (window.BikramSambat) {
+        let bs = new BikramSambat(formattedDate, 'AD');
+        let mName = bs.format('MMMM');
+        let dayNum = bs.format('D');
+        return `${mName} ${toNpNum(dayNum)}`;
+      }
     }
   } catch(e) { console.error(e); }
   return toNpNum(adDateStr);
