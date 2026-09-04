@@ -4,10 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teacher Entry Panel</title>
-  
-  <!-- नेपाली Date Picker library -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nepali-datepicker-reactjs/dist/index.css" />
-  <script src="https://unpkg.com/nepali-date-picker@2.0.1/dist/nepali-date-picker.min.js"></script>
 
   <style>
     *{box-sizing:border-box}
@@ -27,6 +23,9 @@
     label{font-weight:600;font-size:11px;color:#0369a1;display:block;margin-bottom:4px}
     select,input{width:100%;padding:7px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;outline:none;background:white}
     
+    .bs-date-container{display:flex;gap:4px}
+    .bs-date-container select{padding:6px 4px;font-size:11px}
+
     button{width:100%;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none}
     .btn-add{background:#0284c7;color:white}
     .btn-pub{background:#16a34a;color:white}
@@ -96,10 +95,17 @@
         <option value="Computer Science">Computer Science</option>
       </select>
     </div>
+
+    <!-- सिधै सेलेक्ट गर्न मिल्ने नेपाली मिति (वर्ष, महिना, गते) -->
     <div>
-      <label>नेपाली मिति (BS):</label>
-      <input type="text" id="newDateInput" placeholder="२०८३-०५-१९" class="nepali-datepicker">
+      <label>नेपाली मिति छान्नुहोस् (BS):</label>
+      <div class="bs-date-container">
+        <select id="bsYear"></select>
+        <select id="bsMonth"></select>
+        <select id="bsDay"></select>
+      </div>
     </div>
+
     <div style="align-self:end">
       <button class="btn-add" onclick="addNewDay()">+ मिति थप्नुहोस्</button>
     </div>
@@ -137,10 +143,45 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxATLaWfOE7XdJT7A3N9GXYLMkokyXworxNMO7vVkS9vl4RB7NJOPUrZXijZk3ecwDq-A/exec";
 let currentData = { students: [], days: [] };
 
+const nepaliMonths = ["वैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कार्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"];
+
 function toNpNum(str) {
   if (str === undefined || str === null) return '';
   const np = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
+}
+
+// नेपाली मिति Dropdown बनाउने Function
+function initNepaliDateDropdowns() {
+  let yearSel = document.getElementById('bsYear');
+  let monthSel = document.getElementById('bsMonth');
+  let daySel = document.getElementById('bsDay');
+
+  // वर्षहरू (२०८१ देखि २०८५ सम्म)
+  for (let y = 2081; y <= 2085; y++) {
+    let opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = toNpNum(y);
+    if (y === 2083) opt.selected = true;
+    yearSel.appendChild(opt);
+  }
+
+  // महिनाहरू
+  nepaliMonths.forEach((m, idx) => {
+    let opt = document.createElement('option');
+    opt.value = String(idx + 1).padStart(2, '0');
+    opt.textContent = m;
+    monthSel.appendChild(opt);
+  });
+
+  // गतेहरू (१ देखि ३२ सम्म)
+  for (let d = 1; d <= 32; d++) {
+    let opt = document.createElement('option');
+    let val = String(d).padStart(2, '0');
+    opt.value = val;
+    opt.textContent = toNpNum(d);
+    daySel.appendChild(opt);
+  }
 }
 
 function fetchServerData() {
@@ -238,11 +279,17 @@ function changeStudentSection(studentId) {
 }
 
 function addNewDay() {
-  let d = document.getElementById('newDateInput').value.trim();
-  if (!d) return alert("नेपाली मिति टाइप गर्नुहोस् वा छान्नुहोस्!");
-  if (!currentData.days.includes(d)) {
-    currentData.days.push(d);
+  let y = document.getElementById('bsYear').value;
+  let m = document.getElementById('bsMonth').value;
+  let d = document.getElementById('bsDay').value;
+  
+  let dateStr = `${y}-${m}-${d}`;
+  
+  if (!currentData.days.includes(dateStr)) {
+    currentData.days.push(dateStr);
     renderDashboard();
+  } else {
+    alert("यो मिति पहिले नै थपिइसकेको छ!");
   }
 }
 
@@ -278,13 +325,7 @@ function publishData() {
 }
 
 window.onload = function() {
-  // Datepicker Initialize गर्ने
-  try {
-    if (window.nepaliDatePicker) {
-      document.getElementById("newDateInput").nepaliDatePicker();
-    }
-  } catch(e) { console.log(e); }
-  
+  initNepaliDateDropdowns();
   fetchServerData();
 };
 </script>
