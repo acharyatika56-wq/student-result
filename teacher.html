@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teacher Entry Panel</title>
-  <!-- Nepali Date Picker CSS & JS -->
-  <link href="https://nepalidatetimepicker.page16.com/nepali.datepicker.v4.0.5.min.css" rel="stylesheet" type="text/css"/>
-  <script src="https://nepalidatetimepicker.page16.com/nepali.datepicker.v4.0.5.min.js" type="text/javascript"></script>
   
+  <!-- नेपाली Date Picker library -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nepali-datepicker-reactjs/dist/index.css" />
+  <script src="https://unpkg.com/nepali-date-picker@2.0.1/dist/nepali-date-picker.min.js"></script>
+
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f1f5f9;color:#0f172a;padding:12px}
@@ -96,9 +97,8 @@
       </select>
     </div>
     <div>
-      <label>नेपाली मिति छान्नुहोस् (BS):</label>
-      <!-- सिधै नेपाली मिति रोज्ने ठाउँ -->
-      <input type="text" id="newDateInput" placeholder="नेपाली मिति छान्नुहोस्" readonly>
+      <label>नेपाली मिति (BS):</label>
+      <input type="text" id="newDateInput" placeholder="२०८३-०५-१९" class="nepali-datepicker">
     </div>
     <div style="align-self:end">
       <button class="btn-add" onclick="addNewDay()">+ मिति थप्नुहोस्</button>
@@ -181,7 +181,6 @@ function renderDashboard() {
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
-    // नेपाली मिति सिधै टेबलमा देखाउने (जस्तै: २०८०-०५-१९)
     h += `<th colspan="4">${toNpNum(d)}</th>`;
   });
   h += '</tr><tr>';
@@ -239,8 +238,8 @@ function changeStudentSection(studentId) {
 }
 
 function addNewDay() {
-  let d = document.getElementById('newDateInput').value;
-  if (!d) return alert("नेपाली मिति छान्नुहोस्!");
+  let d = document.getElementById('newDateInput').value.trim();
+  if (!d) return alert("नेपाली मिति टाइप गर्नुहोस् वा छान्नुहोस्!");
   if (!currentData.days.includes(d)) {
     currentData.days.push(d);
     renderDashboard();
@@ -279,13 +278,12 @@ function publishData() {
 }
 
 window.onload = function() {
-  // नेपाली datepicker initialize गर्ने
-  var input = document.getElementById("newDateInput");
-  input.nepaliDatePicker({
-    ndpYear: true,
-    ndpMonth: true,
-    ndpYearCount: 10
-  });
+  // Datepicker Initialize गर्ने
+  try {
+    if (window.nepaliDatePicker) {
+      document.getElementById("newDateInput").nepaliDatePicker();
+    }
+  } catch(e) { console.log(e); }
   
   fetchServerData();
 };
