@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teacher Entry Panel</title>
+  <!-- Bikram Sambat Library -->
+  <script src="https://cdn.jsdelivr.net/npm/bikram-sambat@1.3.1/dist/bikram-sambat-umd.js"></script>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f1f5f9;color:#0f172a;padding:12px}
@@ -138,28 +140,18 @@ function toNpNum(str) {
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
-// शुद्ध नेपाली BS मिति क्यालकुलेटर (No Library Needed)
 function convertADToBS(adDateStr) {
   if (!adDateStr) return '';
-  let str = adDateStr.toString().split('T')[0];
-  let parts = str.split('-');
-  if (parts.length !== 3) return toNpNum(adDateStr);
-
-  let y = parseInt(parts[0]);
-  let m = parseInt(parts[1]);
-  let d = parseInt(parts[2]);
-
-  let bsYear = y + 57;
-  let bsMonth = m + 8;
-  let bsDay = d + 17;
-
-  if (bsDay > 30) { bsDay -= 30; bsMonth += 1; }
-  if (bsMonth > 12) { bsMonth -= 12; bsYear += 1; }
-
-  const monthsBS = ["बैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कार्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"];
-  let mName = monthsBS[bsMonth - 1] || "";
-
-  return `${mName} ${toNpNum(bsDay)}`;
+  try {
+    let cleanStr = adDateStr.toString().split('T')[0];
+    if (window.BikramSambat) {
+      let bs = new BikramSambat(cleanStr, 'AD');
+      let mName = bs.format('MMMM');
+      let dayNum = bs.format('D');
+      return `${mName} ${toNpNum(dayNum)}`;
+    }
+  } catch(e) { console.error(e); }
+  return toNpNum(adDateStr);
 }
 
 function fetchServerData() {
