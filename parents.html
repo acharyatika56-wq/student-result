@@ -6,23 +6,41 @@
   <title>Student Homework & Discipline Status</title>
   <style>
     *{box-sizing:border-box}
-    body{margin:0;font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;padding:10px}
-    .header{background:#1e3a8a;color:white;padding:12px;text-align:center;border-radius:8px;margin-bottom:12px}
-    .filter-card{background:white;padding:10px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap}
-    .filter-item{flex:1;min-width:140px}
-    label{font-size:12px;font-weight:bold;display:block;margin-bottom:4px}
-    select{width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px}
+    body{margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:#f8fafc;color:#0f172a;padding:12px}
     
-    table{width:100%;border-collapse:collapse;background:white;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    .header{background:linear-gradient(135deg, #0d9488, #14b8a6);color:white;padding:16px;text-align:center;border-radius:12px;margin-bottom:12px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)}
+    
+    .filter-card{background:white;padding:12px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap;border:1px solid #e2e8f0}
+    .filter-item{flex:1;min-width:140px}
+    label{font-size:11px;font-weight:700;color:#0f766e;display:block;margin-bottom:4px}
+    select{width:100%;padding:7px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:white}
+    
+    .table-container{width:100%;overflow-x:auto;max-height:75vh;border-radius:10px;border:1px solid #cbd5e1;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
+    table{width:100%;border-collapse:collapse;background:white}
     th,td{border:1px solid #e2e8f0;padding:6px;text-align:center;font-size:12px}
-    th{background:#1e40af;color:white}
-    .sub-th{background:#2563eb;font-size:10px}
-    .score-th{background:#0d9488;font-size:10px}
-    .student-name{text-align:left;font-weight:bold;padding-left:8px;background:#f1f5f9}
-    .green{color:#16a34a;font-weight:bold}
-    .red{color:#dc2626;font-weight:bold}
+    
+    thead th { position: sticky; top: 0; z-index: 10; background:#0f766e; color:white; }
+    .sub-th{background:#14b8a6!important;font-size:10px;top:28px}
+    .score-th{background:#047857!important;font-size:10px;top:28px}
+    .total-th{background:#065f46!important;font-size:11px}
+
+    .student-name, th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 11;
+      background: #f1f5f9;
+      text-align:left;
+      padding-left:10px;
+      font-weight:bold;
+      white-space:nowrap;
+    }
+    th:first-child { z-index: 12; background: #0f766e; }
+
+    .green{color:#16a34a;font-weight:bold;background:#f0fdf4}
+    .red{color:#dc2626;font-weight:bold;background:#fef2f2}
     .score{background:#ccfbf1;font-weight:bold;color:#0f766e}
-    #loading{text-align:center;padding:15px;font-weight:bold;color:#2563eb}
+    .total-score{background:#d1fae5;font-weight:bold;color:#065f46;font-size:12px}
+    #loading{text-align:center;padding:10px;font-weight:bold;color:#0f766e;background:#ccfbf1;border-radius:6px;margin-bottom:10px;display:none}
   </style>
 </head>
 <body>
@@ -62,8 +80,9 @@
   </div>
 </div>
 
-<div id="loading">विवरण लोड हुँदैछ...</div>
-<div style="overflow-x:auto;">
+<div id="loading">सर्भरबाट रिपोर्ट लोड हुँदैछ...</div>
+
+<div class="table-container">
   <table id="studentTable"></table>
 </div>
 
@@ -95,17 +114,19 @@ function formatNepaliDate(dStr) {
 function loadStudentData() {
   let cls = document.getElementById('classSel').value;
   let sub = document.getElementById('subSel').value;
-  document.getElementById('loading').style.display = "block";
+  let loadingBox = document.getElementById('loading');
+  loadingBox.style.display = "block";
 
   fetch(`${API_URL}?className=${cls}&subject=${sub}`)
     .then(r => r.json())
     .then(data => {
-      document.getElementById('loading').style.display = "none";
+      loadingBox.style.display = "none";
       sData = data || { students: [], days: [] };
       renderStudentTable();
     })
-    .catch(() => {
-      document.getElementById('loading').style.display = "none";
+    .catch(err => {
+      console.error("Fetch error:", err);
+      loadingBox.style.display = "none";
       renderStudentTable();
     });
 }
@@ -126,7 +147,7 @@ function renderStudentTable() {
   days.forEach(d => {
     h += `<th colspan="4">${formatNepaliDate(d)}</th>`;
   });
-  h += '</tr><tr>';
+  h += '<th rowspan="2" class="total-th">कुल प्राप्ताङ्क</th></tr><tr>';
   days.forEach(() => {
     h += `<th class="sub-th">H</th><th class="sub-th">C</th><th class="sub-th">D</th><th class="score-th">अंक</th>`;
   });
@@ -138,17 +159,23 @@ function renderStudentTable() {
     filtered.forEach(s => {
       h += `<tr><td class="student-name">${s.name} <span style="font-size:10px;color:#64748b">(${s.sec || 'Darwin'})</span></td>`;
       let mData = s.m || {};
+      let totalStudentScore = 0;
+
       days.forEach(d => {
         let dayData = mData[d] || { hw: 0, cw: 0, dis: 0 };
         let score = (dayData.hw === 1 ? 5 : (dayData.hw === -1 ? -2.5 : 0)) +
                     (dayData.cw === 1 ? 5 : (dayData.cw === -1 ? -2.5 : 0)) +
                     (dayData.dis === 1 ? 5 : (dayData.dis === -1 ? -2.5 : 0));
 
+        totalStudentScore += score;
+
         h += `<td class="${dayData.hw === 1 ? 'green' : (dayData.hw === -1 ? 'red' : '')}">${dayData.hw === 1 ? '✓' : (dayData.hw === -1 ? '✕' : '—')}</td>`;
         h += `<td class="${dayData.cw === 1 ? 'green' : (dayData.cw === -1 ? 'red' : '')}">${dayData.cw === 1 ? '✓' : (dayData.cw === -1 ? '✕' : '—')}</td>`;
         h += `<td class="${dayData.dis === 1 ? 'green' : (dayData.dis === -1 ? 'red' : '')}">${dayData.dis === 1 ? '✓' : (dayData.dis === -1 ? '✕' : '—')}</td>`;
         h += `<td class="score">${toNpNum(score)}</td>`;
       });
+
+      h += `<td class="total-score">${toNpNum(totalStudentScore)}</td>`;
       h += '</tr>';
     });
   }
