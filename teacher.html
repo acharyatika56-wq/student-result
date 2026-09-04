@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Class 9 Teacher Dashboard</title>
+  <title>Teacher Entry Panel</title>
   <style>
     *{box-sizing:border-box}
     body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033;padding:8px}
@@ -39,7 +39,7 @@
 </head>
 <body>
 
-<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Class 9 Teacher Dashboard</h3>
+<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Teacher Entry Panel</h3>
 
 <div id="loadingStatus">सर्भरबाट डाटा लोड हुँदैछ...</div>
 
@@ -52,6 +52,14 @@
 
 <div class="filter-box">
   <div class="grid">
+    <div>
+      <label>कक्षा (Class):</label>
+      <select id="classFilter" onchange="fetchServerData()">
+        <option value="8">Class 8</option>
+        <option value="9" selected>Class 9</option>
+        <option value="10">Class 10</option>
+      </select>
+    </div>
     <div>
       <label>सेक्सन (Section):</label>
       <select id="sectionFilter" onchange="renderDashboard()">
@@ -103,30 +111,30 @@
 </div>
 
 <div class="card">
-  <div id="infoBanner" style="font-size:13px;font-weight:bold;color:#0369a1;margin-bottom:6px;">कक्षा: ९</div>
+  <div id="infoBanner" style="font-size:13px;font-weight:bold;color:#0369a1;margin-bottom:6px;">कक्षा छान्नुहोस्</div>
   <div style="width:100%;overflow-x:auto;">
     <table id="tbl"></table>
   </div>
 </div>
 
 <script>
-// Deploy गरेर पाएको नयाँ URL यहाँ हाल्नुहोस्
-const API_URL = "https://script.google.com/macros/s/AKfycbybqQzgXaoeAJvZjDPiAX0yoZ2gJgWY1nCn9p6fmXXl4ug1jWL8nn-GN-Y9hm-rMaURrQ/exec";
-const CLASS_NAME = "9";
+const API_URL = "https://script.google.com/macros/s/AKfycbwb1ilFmQOAzFcnRcTLKvgV2s74SbQlsqWlihIqzFSr7CEDCrjx1mDnCH5LFTaMJN9_kw/exec";
 
 let currentData = {
   students: [],
   days: []
 };
 
-// अङ्कलाई नेपालीमा फेर्ने
+function getSelectedClass() {
+  return document.getElementById('classFilter').value;
+}
+
 function toNpNum(str) {
   if (str === undefined || str === null) return '';
   const np = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
-// English Date लाई नेपाली गते/महिनामा फेर्ने
 function formatNepaliDate(dStr) {
   if (!dStr) return '';
   let parts = dStr.toString().split('T')[0].split('-');
@@ -142,11 +150,12 @@ function formatNepaliDate(dStr) {
 }
 
 function fetchServerData() {
+  let selectedClass = getSelectedClass();
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
 
-  fetch(`${API_URL}?className=${CLASS_NAME}&subject=${sub}`)
+  fetch(`${API_URL}?className=${selectedClass}&subject=${sub}`)
     .then(res => res.json())
     .then(data => {
       statusBox.style.display = "none";
@@ -166,15 +175,15 @@ function fetchServerData() {
 }
 
 function renderDashboard() {
+  let selectedClass = getSelectedClass();
   let sub = document.getElementById('subject').value;
   let targetSec = document.getElementById('sectionFilter').value;
   
-  document.getElementById('infoBanner').textContent = `कक्षा: ९ | सेक्सन: ${targetSec} | विषय: ${sub}`;
+  document.getElementById('infoBanner').textContent = `कक्षा: ${toNpNum(selectedClass)} | सेक्सन: ${targetSec} | विषय: ${sub}`;
 
   let students = currentData.students || [];
   let days = currentData.days || [];
 
-  // Filter Logic: All छानियो भने सबै, नभए Darwin/Newton छुटाउने
   let filteredStudents = students.filter(s => {
     if (targetSec === "ALL") return true;
     let sSec = (s.sec || "Darwin").toString().trim().toLowerCase();
@@ -189,10 +198,10 @@ function renderDashboard() {
   days.forEach(() => {
     h += `<th class="sub-th">H</th><th class="sub-th">C</th><th class="sub-th">D</th><th class="score-th">अंक</th>`;
   });
-  h += '</tr></thead><tbody>';
+  h += '</tr><thead><tbody>';
 
   if (students.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">यो विषयमा डाटा खाली छ। तलबाट नयाँ विद्यार्थीको नाम थपेर 'सुरक्षित Publish गर्नुहोस्' थिच्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">यो कक्षा/विषयमा डाटा खाली छ। नयाँ विद्यार्थी थपेर 'Publish' गर्नुहोस्।</td></tr>`;
   } else if (filteredStudents.length === 0) {
     h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा विद्यार्थी भेटिएनन्। माथिबाट <b>'सबै सेक्सन (All)'</b> छान्नुहोस्।</td></tr>`;
   } else {
@@ -238,7 +247,7 @@ function toggleMark(stId, dateStr, type) {
 
 function addNewDay() {
   let d = document.getElementById('newDateInput').value;
-  if (!d) return alert("मिती छान्नुहोस्");
+  if (!d) return alert("मिति छान्नुहोस्");
   if (!currentData.days.includes(d)) {
     currentData.days.push(d);
     renderDashboard();
@@ -256,6 +265,7 @@ function addNewStudent() {
 }
 
 function publishData() {
+  let selectedClass = getSelectedClass();
   let sub = document.getElementById('subject').value;
   let statusBox = document.getElementById('loadingStatus');
   statusBox.style.display = "block";
@@ -264,7 +274,7 @@ function publishData() {
   fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ className: CLASS_NAME, subject: sub, data: currentData })
+    body: JSON.stringify({ className: selectedClass, subject: sub, data: currentData })
   })
   .then(() => {
     statusBox.style.display = "none";
