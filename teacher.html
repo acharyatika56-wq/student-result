@@ -29,20 +29,26 @@
     button{width:100%;padding:7px 10px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:none}
     .btn-add{background:#0284c7;color:white}
     .btn-pub{background:#16a34a;color:white}
-    .btn-edit-sec{background:#fef08a;color:#854d0e;font-size:10px;padding:2px 6px;margin-left:4px;border-radius:4px;cursor:pointer;border:1px solid #fde047}
+    
+    /* सेक्सन मिलाउने बटनको नयाँ स्टाइल */
+    .btn-edit-sec{background:#e2e8f0;color:#1e293b;font-size:10px;padding:2px 6px;margin-left:6px;border-radius:4px;cursor:pointer;border:1px solid #cbd5e1;font-weight:600}
+    .btn-edit-sec:hover{background:#cbd5e1}
 
     .table-container{width:100%;overflow-x:auto;max-height:70vh;border-radius:8px;border:1px solid #cbd5e1}
     table{border-collapse:collapse;width:100%;background:white}
-    th,td{border:1px solid #cbd5e1;padding:4px 5px;text-align:center;font-size:11px}
+    th,td{border:1px solid #cbd5e1;padding:6px 5px;text-align:center;font-size:11px}
     
     thead th{position:sticky;top:0;z-index:10;background:#1e3a8a;color:white}
-    .sub-th{background:#2563eb!important;font-size:10px;padding:3px;width:24px;top:28px}
-    .score-th{background:#0f766e!important;font-size:10px;padding:3px;width:30px;top:28px}
+    .sub-th{background:#2563eb!important;font-size:10px;padding:4px;width:26px;top:28px}
+    .score-th{background:#0f766e!important;font-size:10px;padding:4px;width:32px;top:28px}
     
-    .student-name-td, th:first-child{position:sticky;left:0;z-index:11;background:#f8fafc;text-align:left;padding-left:8px;font-weight:bold;white-space:nowrap}
-    th:first-child{z-index:12;background:#1e3a8a}
+    /* विद्यार्थीको नाम रहने कोलम (Sticky Name Column Design) */
+    .student-name-td{position:sticky;left:0;z-index:11;background:#ffffff;color:#0f172a;text-align:left;padding-left:10px;font-weight:600;white-space:nowrap;border-right:2px solid #cbd5e1}
+    
+    /* नामको माथिल्लो Header */
+    th:first-child{position:sticky;left:0;z-index:12;background:#1e3a8a;color:#ffffff;text-align:center;padding-left:10px;font-weight:700;border-right:2px solid #cbd5e1}
 
-    .cell{font-size:12px;min-width:22px;user-select:none;font-weight:bold;cursor:pointer}
+    .cell{font-size:12px;min-width:24px;user-select:none;font-weight:bold;cursor:pointer}
     .green{background:#f0fdf4;color:#16a34a}
     .red{background:#fef2f2;color:#dc2626}
     .score-cell{background:#e0f2fe;font-weight:bold;color:#0369a1;font-size:11px}
@@ -96,7 +102,6 @@
       </select>
     </div>
 
-    <!-- सिधै सेलेक्ट गर्न मिल्ने नेपाली मिति (वर्ष, महिना, गते) -->
     <div>
       <label>नेपाली मिति छान्नुहोस् (BS):</label>
       <div class="bs-date-container">
@@ -151,13 +156,15 @@ function toNpNum(str) {
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
-// नेपाली मिति Dropdown बनाउने Function
 function initNepaliDateDropdowns() {
   let yearSel = document.getElementById('bsYear');
   let monthSel = document.getElementById('bsMonth');
   let daySel = document.getElementById('bsDay');
 
-  // वर्षहरू (२०८१ देखि २०८५ सम्म)
+  yearSel.innerHTML = '';
+  monthSel.innerHTML = '';
+  daySel.innerHTML = '';
+
   for (let y = 2081; y <= 2085; y++) {
     let opt = document.createElement('option');
     opt.value = y;
@@ -166,7 +173,6 @@ function initNepaliDateDropdowns() {
     yearSel.appendChild(opt);
   }
 
-  // महिनाहरू
   nepaliMonths.forEach((m, idx) => {
     let opt = document.createElement('option');
     opt.value = String(idx + 1).padStart(2, '0');
@@ -174,7 +180,6 @@ function initNepaliDateDropdowns() {
     monthSel.appendChild(opt);
   });
 
-  // गतेहरू (१ देखि ३२ सम्म)
   for (let d = 1; d <= 32; d++) {
     let opt = document.createElement('option');
     let val = String(d).padStart(2, '0');
@@ -235,6 +240,7 @@ function renderDashboard() {
   } else {
     filteredStudents.forEach((student) => {
       let stId = student.id;
+      // विद्यार्थीको नाम सफा सेतो Background र Dark Text मा देखिने बनाइएको छ
       h += `<tr><td class="student-name-td">${student.name} <button class="btn-edit-sec" onclick="changeStudentSection(${stId})">✏️ ${student.sec || 'Darwin'}</button></td>`;
       let mData = student.m || {};
 
