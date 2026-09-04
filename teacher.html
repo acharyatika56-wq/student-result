@@ -42,7 +42,7 @@
 </head>
 <body>
 
-<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Teacher Entry Panel (Old Data Recovered)</h3>
+<h3 style="margin:0 0 6px 0;font-size:16px;">👨‍🏫 Teacher Entry Panel (नेपाली मिति सहित)</h3>
 
 <div id="loadingStatus">सर्भरबाट पुराना तथा नयाँ डाटा लोड हुँदैछ...</div>
 
@@ -84,7 +84,7 @@
       </select>
     </div>
     <div>
-      <label>नयाँ मिति थप्नुहोस्:</label>
+      <label>नयाँ मिति थप्नुहोस् (Calendar):</label>
       <input type="date" id="newDateInput">
     </div>
     <div style="align-self:end">
@@ -128,40 +128,54 @@ let currentData = {
   days: []
 };
 
+// अंकहरूलाई नेपाली अक्षराङ्कमा रूपान्तरण गर्ने
 function toNpNum(str) {
   if (str === undefined || str === null) return '';
   const np = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
-function formatNepaliDate(dStr) {
-  if (!dStr) return '';
-  let str = dStr.toString().split('T')[0];
+// AD मिति (YYYY-MM-DD) लाई विक्रम संवत् (BS) मा बदल्ने
+function convertADToBS(adDateStr) {
+  if (!adDateStr) return '';
+  let str = adDateStr.toString().split('T')[0];
   let parts = str.split('-');
   
-  if (parts.length === 3) {
-    let y = parseInt(parts[0]);
-    let m = parseInt(parts[1]);
-    let d = parseInt(parts[2]);
-    
-    if (y > 2000) {
-      m = m + 8;
-      if (m > 12) m -= 12;
-    }
-    let months = ["बैशाख","जेठ","असार","साउन","भदौ","असोज","कार्तिक","मंसिर","पुस","माघ","फागुन","चैत"];
-    return months[(m - 1) % 12] + " " + toNpNum(d);
+  if (parts.length !== 3) return toNpNum(adDateStr);
+
+  let year = parseInt(parts[0]);
+  let month = parseInt(parts[1]);
+  let day = parseInt(parts[2]);
+
+  // यदि पहिले नै B.S. वा अर्कै format मा छ भने
+  if (year < 2000) return toNpNum(adDateStr);
+
+  // AD देखि BS को स्थिर offset (लगभग ५६ वर्ष ८ महिना १५ दिन)
+  let bsYear = year + 57;
+  let bsMonth = month + 8;
+  let bsDay = day + 15;
+
+  if (bsDay > 30) {
+    bsDay -= 30;
+    bsMonth += 1;
   }
-  return toNpNum(dStr);
+  if (bsMonth > 12) {
+    bsMonth -= 12;
+  }
+
+  const monthsBS = ["बैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज", "कार्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"];
+  let monthName = monthsBS[bsMonth - 1] || "महिना";
+
+  return `${monthName} ${toNpNum(bsDay)}`;
 }
 
-// पुरानो जस्तोसुकै डाटा Format लाई पनि मिलाउने Magic Function
+// पुराना र नयाँ सबै डाटा सुरक्षित मिलाउने
 function parseIncomingData(rawData) {
   let stdList = [];
   let dayList = [];
 
   if (!rawData) return { students: [], days: [] };
 
-  // यदि rawData नै Array वा Object छ भने
   let rawStudents = rawData.students || rawData.studentList || rawData.data || [];
   let rawDays = rawData.days || rawData.dates || rawData.dayList || [];
 
@@ -169,7 +183,6 @@ function parseIncomingData(rawData) {
     rawStudents = rawData;
   }
 
-  // पुराना विद्यार्थीको नामावली तान्ने
   stdList = rawStudents.map((s, idx) => {
     let stName = s.name || s.studentName || s.stName || (typeof s === 'string' ? s : "Student " + (idx + 1));
     let stSec = s.sec || s.section || s.group || "Darwin";
@@ -184,11 +197,9 @@ function parseIncomingData(rawData) {
     };
   });
 
-  // पुराना मितिहरू तान्ने
-  if (Array.isArray(rawDays)) {
+  if (Array.isArray(rawDays) && rawDays.length > 0) {
     dayList = rawDays;
   } else {
-    // यदि मितिहरू विद्यार्थीको Marks भित्र लुकेका छन् भने खोजेर निकाल्ने
     let detectedDays = new Set();
     stdList.forEach(st => {
       Object.keys(st.m).forEach(k => detectedDays.add(k));
@@ -239,7 +250,8 @@ function renderDashboard() {
 
   let h = '<thead><tr><th rowspan="2">विद्यार्थीको नाम</th>';
   days.forEach(d => {
-    h += `<th colspan="4" style="padding:3px 2px;">${formatNepaliDate(d)}</th>`;
+    // यहाँ AD मितिलाई BS नेपाली मितिमा रूपान्तरण गरेर देखाइएको छ
+    h += `<th colspan="4" style="padding:4px 2px; font-size:12px;">${convertADToBS(d)}</th>`;
   });
   h += '</tr><tr>';
   days.forEach(() => {
@@ -264,7 +276,6 @@ function renderDashboard() {
 
       days.forEach(d => {
         let dayData = mData[d] || { hw: 0, cw: 0, dis: 0 };
-        // यदि पुराना डाटामा सिधै नम्बर छ भने
         if (typeof dayData === 'number') {
           dayData = { hw: dayData > 0 ? 1 : 0, cw: 0, dis: 0 };
         }
