@@ -134,16 +134,24 @@ function toNpNum(str) {
   return str.toString().replace(/[0-9]/g, w => np[parseInt(w)]);
 }
 
+// मितिलाई अनिवार्य नेपालीमा परिणत गर्ने दरोगो Function
 function formatNepaliDate(dStr) {
   if (!dStr) return '';
-  let parts = dStr.toString().split('T')[0].split('-');
+  let str = dStr.toString().split('T')[0];
+  let parts = str.split('-');
+  
   if (parts.length === 3) {
+    let y = parseInt(parts[0]);
     let m = parseInt(parts[1]);
     let d = parseInt(parts[2]);
-    let bsM = m + 8;
-    if (bsM > 12) bsM -= 12;
+    
+    // AD मिति हो भने BS मा रुपान्तरण गर्ने सामान्य हिसाब
+    if (y > 2000) {
+      m = m + 8;
+      if (m > 12) m -= 12;
+    }
     let months = ["बैशाख","जेठ","असार","साउन","भदौ","असोज","कार्तिक","मंसिर","पुस","माघ","फागुन","चैत"];
-    return months[bsM - 1] + " " + toNpNum(d);
+    return months[m - 1] + " " + toNpNum(d);
   }
   return toNpNum(dStr);
 }
@@ -159,11 +167,11 @@ function fetchServerData() {
     .then(data => {
       statusBox.style.display = "none";
       if (data && (data.students || data.days)) {
-        currentData.students = (data.students || []).map(s => ({
-          id: s.id || Date.now(),
-          name: s.name || "Unknown",
-          sec: s.sec || "Darwin",
-          m: s.m || {}
+        currentData.students = (data.students || []).map((s, idx) => ({
+          id: s.id || (Date.now() + idx),
+          name: s.name || s.studentName || "Unknown",
+          sec: s.sec || s.section || "Darwin",
+          m: s.m || s.marks || {}
         }));
         currentData.days = data.days || [];
       } else {
@@ -188,6 +196,7 @@ function renderDashboard() {
   let students = currentData.students || [];
   let days = currentData.days || [];
 
+  // सेक्सन अनुसार विद्यार्थी फिल्टर गर्ने
   let filteredStudents = students.filter(s => {
     if (targetSec === "ALL") return true;
     let sSec = (s.sec || "Darwin").toString().trim().toLowerCase();
@@ -207,12 +216,12 @@ function renderDashboard() {
   h += '</tr></thead><tbody>';
 
   if (students.length === 0) {
-    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">डाटा खाली छ। विद्यार्थी थपेर Publish गर्नुहोस्।</td></tr>`;
+    h += `<tr><td colspan="50" style="padding:15px; color:#d97706; font-weight:bold;">यो कक्षा र विषयमा डाटा खाली छ। तलबाट नयाँ विद्यार्थी थपेर Publish गर्नुहोस्।</td></tr>`;
   } else if (filteredStudents.length === 0) {
     h += `<tr><td colspan="50" style="padding:15px; color:#dc2626;"><b>${targetSec}</b> सेक्सनमा विद्यार्थी भेटिएनन्। 'सबै सेक्सन (All)' छान्नुहोस्।</td></tr>`;
   } else {
-    filteredStudents.forEach((student, idx) => {
-      let stId = student.id || idx;
+    filteredStudents.forEach((student) => {
+      let stId = student.id;
       h += `<tr>`;
       h += `<td class="student-name-td">
               ${student.name} 
